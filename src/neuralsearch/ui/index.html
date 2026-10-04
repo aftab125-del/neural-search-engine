@@ -425,8 +425,10 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ directory_path: dir })
         });
-        const data = await res.json();
-        alert(`Indexing completed!\nIndexed: ${data.indexed_files} files\nChunks created: ${data.total_chunks_created}`);
+        const msg = data.indexed_files > 0
+          ? `Indexing completed!\nNew / Updated: ${data.indexed_files} files\nChunks created: ${data.total_chunks_created}`
+          : `Indexing completed!\nAll ${data.skipped_files || 0} files were already up-to-date in the index (SHA-256 hash match, no changes needed)!`;
+        alert(msg);
         closeIndexModal();
         fetchStats();
       } catch (err) {
