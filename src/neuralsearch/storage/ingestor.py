@@ -13,7 +13,11 @@ from ..core.engine import HybridEngine
 
 logger = logging.getLogger(__name__)
 
-SUPPORTED_EXTENSIONS = {".md", ".txt", ".markdown", ".py", ".json", ".rst", ".html"}
+SUPPORTED_EXTENSIONS = {
+    ".md", ".txt", ".markdown", ".py", ".json", ".rst", ".html",
+    ".ts", ".tsx", ".js", ".jsx", ".css", ".sql", ".yaml", ".yml",
+    ".java", ".cpp", ".c", ".h", ".rs", ".go"
+}
 
 
 IGNORE_DIRS = {
