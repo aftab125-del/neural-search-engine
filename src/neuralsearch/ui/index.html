@@ -179,9 +179,25 @@
       <p class="text-xs text-[#7A7465]">Enter the absolute folder path containing markdown or text files to index.</p>
       
       <div class="space-y-1.5">
-        <label class="mono text-[11px] text-[#7A7465] font-semibold">Directory Path</label>
-        <input id="dirPathInput" type="text" placeholder="D:/notes or D:/docs" 
+        <label class="mono text-[11px] text-[#7A7465] font-semibold">Directory Path on your computer</label>
+        <input id="dirPathInput" type="text" placeholder="e.g. D:/neural-search-engine/src" 
                class="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF5EE] border border-[#E5DBCA] text-xs text-[#3A3131] outline-none focus:border-[#EC5B38]">
+      </div>
+
+      <!-- Quick Presets -->
+      <div class="space-y-1">
+        <span class="mono text-[10px] text-[#8C8575] uppercase font-bold tracking-wider">Quick Presets (Click to test):</span>
+        <div class="flex flex-wrap gap-1.5">
+          <button type="button" onclick="setDirPath('D:/neural-search-engine/src')" class="px-2 py-1 rounded-md bg-[#FAF5EE] hover:bg-[#F3EBDD] border border-[#E5DBCA] mono text-[10px] text-[#524646]">
+            📁 Project Source Code (src)
+          </button>
+          <button type="button" onclick="setDirPath('D:/neural-search-engine/tests')" class="px-2 py-1 rounded-md bg-[#FAF5EE] hover:bg-[#F3EBDD] border border-[#E5DBCA] mono text-[10px] text-[#524646]">
+            📁 Test Files (tests)
+          </button>
+          <button type="button" onclick="setDirPath('E:/UTA-VERSE/src')" class="px-2 py-1 rounded-md bg-[#FAF5EE] hover:bg-[#F3EBDD] border border-[#E5DBCA] mono text-[10px] text-[#524646]">
+            📁 UTA-VERSE Code
+          </button>
+        </div>
       </div>
 
       <div id="indexProgress" class="hidden text-xs mono text-[#EC5B38] bg-[#EC5B38]/10 p-2.5 rounded-xl">
@@ -391,6 +407,10 @@
     function closeIndexModal() {
       document.getElementById('indexModal').classList.add('hidden');
       document.getElementById('indexProgress').classList.add('hidden');
+    }
+
+    function setDirPath(path) {
+      document.getElementById('dirPathInput').value = path;
     }
 
     async function startIndexing() {
