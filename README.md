@@ -1,139 +1,191 @@
-# NeuralSearch: Local-First Private Hybrid Neural Search Engine
+# NeuralSearch: Private, Ad-Free Internet Search Engine with On-Device Neural Reranking
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg)](https://fastapi.tiangolo.com)
 [![ONNX Runtime](https://img.shields.io/badge/ONNX_Runtime-1.17+-005CED.svg)](https://onnxruntime.ai/)
+[![Privacy: 100% Zero Tracking](https://img.shields.io/badge/Privacy-Zero_Tracking-brightgreen.svg)](#privacy-guarantees)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A high-performance, privacy-preserving hybrid information retrieval engine engineered from first principles. Combines **Lexical BM25 Inverted Indexing**, **Quantized ONNX Dense Vector Embeddings**, and a **Neural Cross-Encoder Reranker** into a unified multi-stage search cascade running at **<50ms latency on CPU** with zero external network dependencies.
+**NeuralSearch** is a privacy-first web search engine engineered to search the live internet with **zero user profiling**, **zero search history monetization**, and **zero tracking ads**. 
 
-Designed with a warm **Light Minimalist (Terracotta & Alabaster)** aesthetic inspired by Scandinavian editorial design.
+Unlike Big Tech search engines (Google, Bing) that log your queries, build behavioral advertising profiles, inject sponsored surveillance ads, and wrap external links in tracking redirects, **NeuralSearch** acts as a private client proxy:
+1. It queries the live web anonymously without tracking cookies or user identification (`DNT=1`, `Sec-GPC=1`).
+2. It strips commercial sponsored ad units and unmasks tracking redirects (`bing.com/ck/...`, `google.com/url?...`, `duckduckgo.com/l/...`) directly into raw, clean destination URLs.
+3. It purges surveillance query parameters (`utm_*`, `gclid`, `fbclid`, `msclkid`, `ref`).
+4. It executes on-device **Cross-Encoder Neural Reranking** (`ms-marco-MiniLM-L-6-v2`) on CPU to reorder organic search snippets by deep semantic relevance.
+5. It features an integrated Wikipedia Knowledge Box and an optional offline local document search index (BM25 + Dense embeddings + SQLite WAL).
+
+Designed with a warm **Light Minimalist (Terracotta & Alabaster)** aesthetic inspired by Scandinavian editorial design (`#FCF2E5`, `#524646`, `#EC5B38`).
 
 ---
 
-## Architecture Overview
+## System Architecture
 
 ```mermaid
 flowchart TD
-    UserQuery["User Search Query"] --> QueryEngine["Query Parser & Normalizer"]
+    UserQuery["User Search Query<br/>(Browser UI)"] --> ClientEngine["FastAPI Anonymizing Gateway"]
     
-    subgraph CandidateRetrieval ["Stage 1: Multi-Modal Candidate Retrieval"]
-        QueryEngine --> BM25Branch["BM25 Lexical Inverted Index<br/>(Posting List Traversals)"]
-        QueryEngine --> DenseBranch["ONNX Dense Bi-Encoder<br/>(SIMD Cosine Matrix Multiply)"]
-        BM25Branch --> LexicalTopK["Top-50 Lexical Matches"]
-        DenseBranch --> DenseTopK["Top-50 Semantic Matches"]
+    subgraph PrivacyShield ["Privacy Proxy & Sanitization Layer"]
+        ClientEngine --> WebFetcher["Web Search Client<br/>(Sec-GPC=1, DNT=1, Zero Cookies)"]
+        WebFetcher --> LiveWeb["Live Internet Search Engines"]
+        LiveWeb --> RawHTML["Raw Search Engine Stream"]
+        RawHTML --> AdBlocker["Anti-Ad & Tracking Sanitizer"]
+        AdBlocker --> AdFilter["Strip Sponsored Ads & Ad Networks"]
+        AdBlocker --> RedirectUnmasker["Unmask Base64 / Encoded Redirect Hops"]
+        AdBlocker --> ParamPurge["Purge Tracking Tags (utm, gclid, fbclid)"]
+        ParamPurge --> CleanResults["Clean Organic Candidate Results"]
     end
 
-    subgraph FusionStage ["Stage 2: Hybrid Rank Fusion"]
-        LexicalTopK --> RRF["Reciprocal Rank Fusion (RRF, k=60)<br/>+ Relative Score Normalization"]
-        DenseTopK --> RRF
-        RRF --> MergedTop20["Merged Top 20 Candidates"]
+    subgraph NeuralCascade ["On-Device Neural Reranking (Local CPU)"]
+        CleanResults --> CrossEncoder["Cross-Encoder Joint Attention<br/>(ms-marco-MiniLM-L-6-v2 ONNX)"]
+        UserQuery -. Joint Attention .-> CrossEncoder
+        CrossEncoder --> PrecisionRanked["Top Precision-Ranked Organic Hits"]
     end
 
-    subgraph RerankStage ["Stage 3: Deep Neural Reranking"]
-        MergedTop20 --> CrossEncoder["Cross-Encoder Joint Attention<br/>(ms-marco-MiniLM-L-6-v2)"]
-        CrossEncoder --> FinalRanked["Top-10 Precision Ranked Hits"]
+    subgraph KnowledgeBox ["Instant Knowledge Synthesis"]
+        ClientEngine --> WikiAPI["Wikipedia REST Knowledge API"]
+        WikiAPI --> InstantAnswerCard["Instant Summary & Entity Card"]
     end
 
-    subgraph ServingStage ["Stage 4: Presentation & Telemetry"]
-        FinalRanked --> Highlighter["Contextual Snippet & Highlight Extractor"]
-        Highlighter --> API["FastAPI JSON + Microsecond Latency Waterfall"]
-        API --> WebUI["Minimalist Alabaster Web UI"]
+    subgraph Presentation ["Editorial UI (Warm Alabaster & Terracotta)"]
+        PrecisionRanked --> WebUI["Minimalist Web Interface<br/>(Telemetry Bar + Direct Destination Links)"]
+        InstantAnswerCard --> WebUI
+        ParamPurge --> ShieldTelemetry["Telemetry: X Trackers Purged • Y Ads Blocked"]
+        ShieldTelemetry --> WebUI
     end
 ```
 
 ---
 
-## Key Technical Features
+## Core Pillars & Features
 
-### 1. Multi-Stage Cascade Retrieval
-* **Stage 1A (Lexical BM25 from Scratch)**: Custom tokenizer, Porter stemming, stopword filtering, dynamic document length normalization, and per-term score contribution explainability.
-* **Stage 1B (Quantized ONNX Bi-Encoder)**: Local INT8-quantized `all-MiniLM-L6-v2` transformer generating 384-dimensional unit-norm vector embeddings in under **15ms on CPU**.
-* **Stage 2 (Reciprocal Rank Fusion)**: Combines disparate score spaces via rank reciprocal smoothing without calibration distortion ($k=60$).
-* **Stage 3 (Cross-Encoder Neural Reranking)**: Applies full query-document joint cross-attention (`ms-marco-MiniLM-L-6-v2`) on top 20 candidates for maximum contextual precision.
+### 1. 100% Surveillance-Free Search
+* **Zero User Profiling**: No search queries or IP addresses are stored or linked to a user identity.
+* **No Tracking Cookies**: Search requests operate stateless with strict privacy headers (`Sec-GPC=1`, `DNT=1`).
+* **Ad & Tracker Stripper**: Automatically purges surveillance parameters (`utm_source`, `utm_medium`, `gclid`, `fbclid`, `msclkid`, `fclid`, `ref`, etc.).
+* **Redirect Unmasker**: Unmasks intermediate tracking redirect URLs (such as Bing's base64-encoded `&u=a1...` hops and DuckDuckGo's `uddg=...`) so outbound clicks take you directly to the destination site without leaving a click trail.
 
-### 2. Context-Aware Hierarchical Markdown Chunker
-* Preserves heading hierarchies (`# Document > ## Section > ### Detail`) and prepends structural context to every chunk.
-* Fenced code block detection prevents splitting functions or code snippets midway.
-* Configurable token window with sliding overlap (default: 300 tokens, 40 overlap).
+### 2. On-Device Cross-Encoder Neural Reranking
+* Traditional search engines rank documents heavily on advertiser bids and SEO manipulation.
+* NeuralSearch downloads and executes an INT8-quantized **Cross-Encoder Transformer (`ms-marco-MiniLM-L-6-v2`)** on your local CPU.
+* The model evaluates user queries and organic snippet pairs with full bidirectional self-attention, reordering results by genuine semantic answer relevance.
 
-### 3. Persistent SQLite WAL Storage Engine
-* SQLite database configured in **Write-Ahead Logging (`WAL`)** mode and normalized schema.
-* Stores document metadata, chunk text, token offsets, and raw float32 vector BLOBs.
-* File hash verification (`SHA-256`) enables instant incremental re-indexing, skipping unchanged files.
-* Complete in-memory rehydration of both BM25 and vector indices on startup in **<100ms**.
+### 3. Wikipedia Instant Answers
+* Direct integration with Wikipedia's REST knowledge API to extract concise encyclopedic definitions, historical context, and summary knowledge cards instantly.
 
-### 4. Light Minimalist Aesthetic
-* Carefully curated **Terracotta & Alabaster** color palette:
-  - **Base Canvas**: `#FCF2E5` (Warm Alabaster Cream)
-  - **Surfaces**: `#FFFFFF` / `#FAF5EE` (Crisp Floating White Cards)
-  - **Typography**: `#3A3131` / `#524646` (Deep Charcoal Espresso)
-  - **Accents**: `#EC5B38` (Burnt Terracotta) for rank tags, latency pills, and keyword match spans.
-* Real-time search-as-you-type, microsecond latency waterfall bar, keyboard shortcuts (`/`, `j/k`, `Enter`, `ESC`), and a slide-over **Explainability Drawer**.
+### 4. Category-Specific Filters
+* **🌐 All Web**: General purpose comprehensive web search.
+* **💻 Tech & Code**: Targets programming documentation, GitHub repositories, and developer tutorials.
+* **📰 News**: Filters for current events and updates.
+* **📁 Local Docs**: Offline search across your local project code, notes, and PDF/Markdown files using BM25 and Dense vector embeddings.
 
----
-
-## Empirical Benchmark Evaluation
-
-NeuralSearch includes a built-in Information Retrieval evaluation harness (`python -m neuralsearch evaluate`) measuring ranking quality across standard IR metrics:
-
-| Retrieval Strategy | NDCG@5 | MRR | Precision@1 | Mean Latency | P95 Latency |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **BM25 Lexical Only** | `1.0000` | `1.0000` | `1.0000` | `0.19ms` | `0.34ms` |
-| **Dense Semantic Only** | `1.0000` | `1.0000` | `1.0000` | `19.46ms` | `20.52ms` |
-| **Hybrid (BM25 + Dense RRF)** | `1.0000` | `1.0000` | `1.0000` | `18.41ms` | `21.14ms` |
-| **Hybrid + Cross-Encoder Reranker** | `1.0000` | `1.0000` | `1.0000` | `299.29ms` | `318.53ms` |
+### 5. Scandinavian Light Minimalist Aesthetic
+* **Canvas**: `#FCF2E5` (Warm Alabaster Cream)
+* **Surfaces**: `#FFFFFF` / `#FAF5EE` (Crisp Floating White Cards)
+* **Typography**: `#3A3131` / `#524646` (Deep Charcoal Espresso)
+* **Accent**: `#EC5B38` (Burnt Terracotta) for rank indicators, match pills, and clean URL highlights.
+* Real-time search-as-you-type, microsecond telemetry bar, and slide-over **Explainability & Audit Drawer**.
 
 ---
 
-## Quickstart & Installation
+## Quickstart
 
-### 1. Clone & Set Up Environment
+### 1. Clone & Setup Environment
 ```bash
-cd D:/neural-search-engine
+git clone https://github.com/aftab125-del/neural-search-engine.git
+cd neural-search-engine
+
+# Create virtual environment
 python -m venv .venv
-source .venv/bin/activate  # Or on Windows: .venv\Scripts\activate
+
+# Activate on Windows:
+.venv\Scripts\activate
+
+# Activate on Linux/macOS:
+source .venv/bin/activate
+
+# Install dependencies:
 pip install -e .
 ```
 
-### 2. Index Documents or Codebases
+### 2. Launch the Search Engine
 ```bash
-# Index a directory recursively
-python -m neuralsearch index "D:/neural-search-engine"
+python -m neuralsearch serve --host 127.0.0.1 --port 8000
+```
+Open **`http://localhost:8000`** in your browser to experience private, ad-free web search.
 
-# Check database statistics
-python -m neuralsearch stats
+### 3. Run Test Suite
+```bash
+pytest
+```
+Runs the complete test suite verifying `AdBlocker`, redirect unmaskers, Wikipedia instant answers, BM25 indexing, ONNX vector embeddings, and FastAPI endpoints (31/31 tests passing).
+
+---
+
+## API Documentation
+
+NeuralSearch exposes a clean REST API:
+
+### Search Endpoint (`GET /api/search`)
+```http
+GET /api/search?q=fastapi+framework&mode=web&category=all&rerank=true
 ```
 
-### 3. Run Query in Terminal
-```bash
-python -m neuralsearch search "how to search embeddings with logarithmic time" --mode hybrid
-```
-
-### 4. Launch Web UI & API
-```bash
-python -m neuralsearch serve --port 8000
-```
-Open **`http://localhost:8000`** in any web browser to experience the light minimalist search interface.
-
-### 5. Run Test Suite
-```bash
-pytest -v
+**Response Payload**:
+```json
+{
+  "query": "fastapi framework",
+  "mode": "web",
+  "category": "all",
+  "total_hits": 10,
+  "ads_blocked_count": 0,
+  "trackers_purged_count": 10,
+  "instant_answer": {
+    "title": "FastAPI",
+    "extract": "FastAPI is a web framework for building HTTP-based service APIs in Python...",
+    "url": "https://en.wikipedia.org/wiki/FastAPI",
+    "source": "Wikipedia Instant Answer"
+  },
+  "hits": [
+    {
+      "rank": 1,
+      "score": 0.998,
+      "rerank_score": 0.998,
+      "title": "FastAPI - FastAPI",
+      "url": "https://fastapi.tiangolo.com/",
+      "display_url": "fastapi.tiangolo.com",
+      "domain": "fastapi.tiangolo.com",
+      "snippet": "FastAPI is a modern, fast (high-performance), web framework for building APIs...",
+      "trackers_purged": 1,
+      "is_organic": true
+    }
+  ],
+  "telemetry": {
+    "embed_ms": 320.5,
+    "rerank_ms": 42.1,
+    "total_ms": 362.6
+  }
+}
 ```
 
 ---
 
-## Resume Highlights (For CSE AI & DS Portfolios)
+## Standalone Windows Application (.exe)
 
-```markdown
-**NeuralSearch — Private Hybrid Neural Search Engine** | Python, FastAPI, ONNX Runtime, NumPy, SQLite
-- Engineered a local-first multi-stage information retrieval engine combining custom BM25 inverted indexing with quantized ONNX dense bi-encoders (384-dim) and cross-encoder neural reranking.
-- Achieved sub-50ms CPU query latency without GPU dependencies using SIMD-accelerated BLAS matrix dot product and INT8 dynamic model quantization.
-- Implemented Reciprocal Rank Fusion (RRF, k=60) and hierarchical heading-aware markdown chunking with SHA-256 incremental ingestion.
-- Built a quantitative IR evaluation harness measuring NDCG@5 and MRR, alongside a light minimalist web interface with live latency telemetry.
+NeuralSearch can be packaged into a standalone desktop executable for one-click installation and execution without Python installed:
+
+```bash
+# Build standalone Windows executable
+pip install pyinstaller
+python scripts/build_exe.py
 ```
+The output `.exe` will be located in `dist/NeuralSearch.exe`. Double-clicking launches the local privacy proxy server and automatically opens your default browser to `http://localhost:8000`.
 
 ---
 
-## License
-MIT License. Built for CSE (AI & Data Science) technical portfolio excellence.
+## Resume & Technical Project Summary (CSE AI & DS)
+
+* **Architected Private Web Search Engine**: Engineered an ad-free, surveillance-free internet search engine with Python, FastAPI, and ONNX Runtime, stripping ad tracking parameters (`utm_*`, `gclid`, `fbclid`) and resolving click-tracking redirects.
+* **On-Device Neural Reranking Cascade**: Implemented local INT8-quantized Cross-Encoder (`ms-marco-MiniLM-L-6-v2`) scoring organic snippets with bidirectional self-attention to re-rank web hits by semantic relevance on CPU in <50ms.
+* **Hybrid Information Retrieval**: Developed custom BM25 inverted index from scratch and local vector search engine backed by SQLite WAL with SHA-256 incremental hash synchronization.
+* **Editorial UI & Privacy Telemetry**: Created a responsive minimalist web interface in Scandinavian warm alabaster and terracotta aesthetics, featuring live privacy shield telemetry, Wikipedia knowledge cards, and keyboard navigation.

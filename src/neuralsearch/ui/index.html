@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NeuralSearch • Local-First Hybrid IR</title>
+  <title>NeuralSearch • Private & Ad-Free Web Search</title>
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
     body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #FCF2E5; color: #524646; }
     .mono { font-family: 'JetBrains Mono', monospace; }
     
     mark.highlight {
-      background-color: rgba(236, 91, 56, 0.14);
+      background-color: rgba(236, 91, 56, 0.15);
       color: #D14421;
       font-weight: 600;
       padding: 1px 4px;
@@ -23,12 +23,20 @@
     }
     .result-card:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 24px -4px rgba(82, 70, 70, 0.08);
+      box-shadow: 0 10px 28px -6px rgba(82, 70, 70, 0.09);
       border-color: rgba(236, 91, 56, 0.45);
     }
     .result-card.selected {
       border-color: #EC5B38;
       box-shadow: 0 0 0 2px rgba(236, 91, 56, 0.2);
+    }
+
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background-color: #E0D5BE;
+      border-radius: 4px;
     }
   </style>
 </head>
@@ -38,29 +46,33 @@
   <div class="max-w-4xl mx-auto w-full p-4 sm:p-6 lg:p-8 space-y-6">
 
     <!-- Top Navigation Header -->
-    <header class="flex items-center justify-between border-b border-[#E5DBCA] pb-4">
+    <header class="flex flex-wrap items-center justify-between border-b border-[#E5DBCA] pb-4 gap-3">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl bg-[#EC5B38] flex items-center justify-center font-bold text-white text-base shadow-md shadow-[#EC5B38]/20">
+        <div class="w-10 h-10 rounded-2xl bg-[#EC5B38] flex items-center justify-center font-extrabold text-white text-lg shadow-md shadow-[#EC5B38]/20">
           N
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <span class="font-extrabold text-base tracking-tight text-[#3A3131]">NEURAL<span class="text-[#EC5B38]">SEARCH</span></span>
-            <span class="mono text-[10px] px-2 py-0.5 rounded-full bg-[#FFFFFF] border border-[#E5DBCA] text-[#7A7465] font-semibold">Local-First</span>
+            <span class="font-extrabold text-lg tracking-tight text-[#3A3131]">NEURAL<span class="text-[#EC5B38]">SEARCH</span></span>
+            <span class="mono text-[10px] px-2.5 py-0.5 rounded-full bg-[#FFFFFF] border border-[#E5DBCA] text-[#2E7D32] bg-emerald-50/80 font-bold flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Private & Ad-Free
+            </span>
           </div>
-          <p class="text-xs text-[#8C8575]">BM25 + ONNX Dense Bi-Encoder + Neural Cross-Encoder</p>
+          <p class="text-xs text-[#8C8575]">Live Web Retrieval • Zero Trackers • Zero Ads • On-Device Neural Reranking</p>
         </div>
       </div>
 
-      <!-- Quick Actions -->
+      <!-- Quick Actions & Privacy Shield Status -->
       <div class="flex items-center gap-2">
-        <button onclick="openIndexModal()" class="px-3 py-1.5 rounded-lg bg-[#FFFFFF] hover:bg-[#FAF5EE] border border-[#E5DBCA] text-xs font-semibold text-[#524646] flex items-center gap-1.5 transition-colors shadow-xs">
-          <svg class="w-3.5 h-3.5 text-[#EC5B38]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-          Index Folder
-        </button>
-        <div id="statsBadge" class="mono text-xs px-3 py-1.5 rounded-lg bg-[#FFFFFF] border border-[#E5DBCA] text-[#7A7465] shadow-xs">
-          Docs: <strong id="totalDocs" class="text-[#3A3131]">0</strong>
+        <div class="hidden sm:flex items-center gap-1.5 mono text-[11px] px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#E5DBCA] text-[#7A7465] shadow-xs">
+          <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+          <span>Shield: <strong>Active</strong></span>
         </div>
+        <button onclick="openIndexModal()" class="px-3 py-1.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF5EE] border border-[#E5DBCA] text-xs font-semibold text-[#524646] flex items-center gap-1.5 transition-colors shadow-xs">
+          <svg class="w-3.5 h-3.5 text-[#EC5B38]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+          Local Indexer
+        </button>
       </div>
     </header>
 
@@ -72,7 +84,7 @@
           <svg class="w-5 h-5 text-[#A8A492] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
           </svg>
-          <input id="searchInput" type="text" placeholder="Type a concept, query, or technical keyword..." 
+          <input id="searchInput" type="text" placeholder="Search the web freely without tracking, ads, or cookies..." 
                  class="w-full bg-transparent text-[#3A3131] text-base placeholder-[#A8A492] outline-none font-medium"
                  autofocus>
           <div class="flex items-center gap-1.5 shrink-0">
@@ -82,55 +94,82 @@
         </div>
       </div>
 
-      <!-- Mode Selector & Controls -->
+      <!-- Category Tabs & Controls -->
       <div class="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
+        <!-- Search Scope Tabs -->
         <div class="flex items-center gap-1 bg-[#FFFFFF] p-1 rounded-xl border border-[#E5DBCA] shadow-xs">
-          <button onclick="setMode('hybrid')" id="btnHybrid" class="px-3 py-1 rounded-lg font-bold bg-[#EC5B38] text-white transition-colors">
-            Hybrid (RRF + Rerank)
+          <button onclick="setCategory('all')" id="tabAll" class="px-3 py-1.5 rounded-lg font-bold bg-[#EC5B38] text-white transition-colors flex items-center gap-1.5">
+            <span>🌐</span> All Web
           </button>
-          <button onclick="setMode('bm25')" id="btnBm25" class="px-3 py-1 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors">
-            BM25 Lexical
+          <button onclick="setCategory('tech')" id="tabTech" class="px-3 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors flex items-center gap-1.5">
+            <span>💻</span> Tech & Code
           </button>
-          <button onclick="setMode('dense')" id="btnDense" class="px-3 py-1 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors">
-            Dense Semantic
+          <button onclick="setCategory('news')" id="tabNews" class="px-3 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors flex items-center gap-1.5">
+            <span>📰</span> News
+          </button>
+          <button onclick="setCategory('local')" id="tabLocal" class="px-3 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors flex items-center gap-1.5">
+            <span>📁</span> Local Docs
           </button>
         </div>
 
-        <div class="flex items-center gap-2">
+        <!-- Filter Controls -->
+        <div class="flex items-center gap-3">
           <label class="flex items-center gap-1.5 cursor-pointer text-xs text-[#7A7465]">
             <input type="checkbox" id="rerankToggle" checked onchange="triggerSearch()" class="rounded border-[#E5DBCA] text-[#EC5B38] focus:ring-[#EC5B38]">
-            <span>Neural Reranker</span>
+            <span class="font-medium">Neural Reranker (Cross-Encoder)</span>
           </label>
         </div>
       </div>
 
-      <!-- Latency Waterfall Telemetry Bar -->
-      <div id="telemetryBar" class="hidden flex flex-wrap items-center justify-between px-4 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E5DBCA] mono text-xs shadow-xs">
+      <!-- Privacy & Telemetry Bar -->
+      <div id="telemetryBar" class="hidden flex flex-wrap items-center justify-between px-4 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E5DBCA] mono text-xs shadow-xs gap-2">
         <div class="flex flex-wrap items-center gap-3">
-          <span class="text-[#A8A492] uppercase font-bold tracking-wider text-[10px]">Telemetry:</span>
-          <span class="text-[#524646]">BM25: <strong id="tBm25" class="text-[#3A3131]">0ms</strong></span>
+          <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold text-[10px] flex items-center gap-1 border border-emerald-200">
+            <svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd"></path></svg>
+            PRIVACY SHIELD
+          </span>
+          <span class="text-[#524646]">Ads Blocked: <strong id="tAdsBlocked" class="text-emerald-700">0</strong></span>
           <span class="text-[#D8CCA9]">•</span>
-          <span class="text-[#524646]">Embed: <strong id="tEmbed" class="text-[#3A3131]">0ms</strong></span>
+          <span class="text-[#524646]">Trackers Stripped: <strong id="tTrackersPurged" class="text-[#EC5B38]">0</strong></span>
           <span class="text-[#D8CCA9]">•</span>
-          <span class="text-[#524646]">Vector Search: <strong id="tVec" class="text-[#3A3131]">0ms</strong></span>
+          <span class="text-[#524646]">Web Fetch: <strong id="tFetch" class="text-[#3A3131]">0ms</strong></span>
           <span class="text-[#D8CCA9]">•</span>
-          <span class="text-[#524646]">Cross-Encoder: <strong id="tRerank" class="text-[#EC5B38]">0ms</strong></span>
+          <span class="text-[#524646]">Neural Rerank: <strong id="tRerank" class="text-[#EC5B38]">0ms</strong></span>
         </div>
         <span id="tTotal" class="text-[#EC5B38] font-bold text-xs bg-[#EC5B38]/10 px-2 py-0.5 rounded">Total: 0ms</span>
       </div>
     </div>
 
+    <!-- Instant Answer Section (Wikipedia / Knowledge) -->
+    <div id="instantAnswerBox" class="hidden"></div>
+
     <!-- Results Container -->
     <div id="resultsList" class="space-y-3.5">
       <!-- Empty state placeholder -->
-      <div id="emptyState" class="text-center py-16 px-4 rounded-3xl bg-[#FAF5EE]/60 border-2 border-dashed border-[#E5DBCA] space-y-3">
-        <div class="w-12 h-12 rounded-2xl bg-[#EC5B38]/10 text-[#EC5B38] flex items-center justify-center mx-auto">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+      <div id="emptyState" class="text-center py-16 px-4 rounded-3xl bg-[#FAF5EE]/70 border-2 border-dashed border-[#E5DBCA] space-y-4">
+        <div class="w-14 h-14 rounded-2xl bg-[#EC5B38]/10 text-[#EC5B38] flex items-center justify-center mx-auto shadow-xs">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
         </div>
-        <h3 class="text-base font-bold text-[#3A3131]">Search Your Local Knowledge Base</h3>
-        <p class="text-xs text-[#7A7465] max-w-sm mx-auto">
-          Indexes markdown documents, technical specs, and code. Queries are processed locally on CPU with zero cloud latency.
-        </p>
+        <div class="space-y-1">
+          <h3 class="text-lg font-bold text-[#3A3131]">Private, Ad-Free Internet Search</h3>
+          <p class="text-xs text-[#7A7465] max-w-md mx-auto leading-relaxed">
+            Search the live web without Big Tech tracking cookies, tracking IDs, or sponsored ads.
+            Organic snippets are locally reranked on CPU using an ONNX Cross-Encoder model.
+          </p>
+        </div>
+        
+        <!-- Feature Highlights -->
+        <div class="flex flex-wrap justify-center gap-3 pt-2">
+          <div class="flex items-center gap-1.5 mono text-[11px] px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#E5DBCA] text-[#524646]">
+            <span class="text-emerald-600 font-bold">✓</span> Zero Ad Surveillance
+          </div>
+          <div class="flex items-center gap-1.5 mono text-[11px] px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#E5DBCA] text-[#524646]">
+            <span class="text-emerald-600 font-bold">✓</span> UTM & Click IDs Purged
+          </div>
+          <div class="flex items-center gap-1.5 mono text-[11px] px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#E5DBCA] text-[#524646]">
+            <span class="text-emerald-600 font-bold">✓</span> ONNX Neural Reranking
+          </div>
+        </div>
       </div>
     </div>
 
@@ -142,7 +181,7 @@
       <div class="flex items-center justify-between border-b border-[#E5DBCA] pb-4">
         <div>
           <span class="mono text-[10px] uppercase tracking-wider text-[#EC5B38] font-bold">Provenance & Inspection</span>
-          <h2 class="text-base font-bold text-[#3A3131]">Under-The-Hood Explainability</h2>
+          <h2 class="text-base font-bold text-[#3A3131]">Audit & Privacy Transparency</h2>
         </div>
         <button onclick="closeDrawer()" class="p-1 rounded-lg text-[#7A7465] hover:bg-[#FAF5EE]">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -151,16 +190,22 @@
 
       <!-- Provenance Metrics -->
       <div class="space-y-3">
-        <h4 class="mono text-xs uppercase font-bold text-[#7A7465]">Scoring Breakdown</h4>
+        <h4 class="mono text-xs uppercase font-bold text-[#7A7465]">Neural & Sanitization Audit</h4>
         <div id="drawerScores" class="p-3.5 rounded-xl bg-[#FAF5EE] border border-[#E5DBCA] space-y-2 mono text-xs">
           <!-- Populated dynamically -->
         </div>
       </div>
 
-      <!-- Document Content -->
+      <!-- Full URL Inspection -->
       <div class="space-y-2">
-        <h4 class="mono text-xs uppercase font-bold text-[#7A7465]">Full Chunk Content</h4>
-        <pre id="drawerContent" class="p-3.5 rounded-xl bg-[#FAF5EE] border border-[#E5DBCA] text-xs text-[#3A3131] whitespace-pre-wrap font-sans leading-relaxed max-h-96 overflow-y-auto"></pre>
+        <h4 class="mono text-xs uppercase font-bold text-[#7A7465]">Sanitized Destination URL</h4>
+        <div id="drawerUrl" class="p-3 rounded-xl bg-[#FAF5EE] border border-[#E5DBCA] text-xs text-[#3A3131] break-all mono"></div>
+      </div>
+
+      <!-- Snippet Details -->
+      <div class="space-y-2">
+        <h4 class="mono text-xs uppercase font-bold text-[#7A7465]">Web Snippet Content</h4>
+        <pre id="drawerContent" class="p-3.5 rounded-xl bg-[#FAF5EE] border border-[#E5DBCA] text-xs text-[#3A3131] whitespace-pre-wrap font-sans leading-relaxed max-h-64 overflow-y-auto"></pre>
       </div>
     </div>
 
@@ -173,10 +218,10 @@
   <div id="indexModal" class="hidden fixed inset-0 bg-black/30 backdrop-blur-xs flex items-center justify-center p-4 z-50">
     <div class="max-w-md w-full bg-[#FFFFFF] rounded-3xl p-6 border border-[#E5DBCA] shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b border-[#E5DBCA] pb-3">
-        <h3 class="font-bold text-base text-[#3A3131]">Index Local Directory</h3>
+        <h3 class="font-bold text-base text-[#3A3131]">Index Local Files</h3>
         <button onclick="closeIndexModal()" class="text-[#7A7465] hover:text-[#3A3131]">✕</button>
       </div>
-      <p class="text-xs text-[#7A7465]">Enter the absolute folder path containing markdown or text files to index.</p>
+      <p class="text-xs text-[#7A7465]">Optionally index local markdown, code, or docs for offline search.</p>
       
       <div class="space-y-1.5">
         <label class="mono text-[11px] text-[#7A7465] font-semibold">Directory Path on your computer</label>
@@ -184,24 +229,20 @@
                class="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF5EE] border border-[#E5DBCA] text-xs text-[#3A3131] outline-none focus:border-[#EC5B38]">
       </div>
 
-      <!-- Quick Presets -->
       <div class="space-y-1">
-        <span class="mono text-[10px] text-[#8C8575] uppercase font-bold tracking-wider">Quick Presets (Click to test):</span>
+        <span class="mono text-[10px] text-[#8C8575] uppercase font-bold tracking-wider">Quick Presets:</span>
         <div class="flex flex-wrap gap-1.5">
           <button type="button" onclick="setDirPath('D:/neural-search-engine/src')" class="px-2 py-1 rounded-md bg-[#FAF5EE] hover:bg-[#F3EBDD] border border-[#E5DBCA] mono text-[10px] text-[#524646]">
-            📁 Project Source Code (src)
+            📁 Project Source (src)
           </button>
-          <button type="button" onclick="setDirPath('D:/neural-search-engine/tests')" class="px-2 py-1 rounded-md bg-[#FAF5EE] hover:bg-[#F3EBDD] border border-[#E5DBCA] mono text-[10px] text-[#524646]">
-            📁 Test Files (tests)
-          </button>
-          <button type="button" onclick="setDirPath('E:/UTA-VERSE/src')" class="px-2 py-1 rounded-md bg-[#FAF5EE] hover:bg-[#F3EBDD] border border-[#E5DBCA] mono text-[10px] text-[#524646]">
-            📁 UTA-VERSE Code
+          <button type="button" onclick="setDirPath('D:/neural-search-engine')" class="px-2 py-1 rounded-md bg-[#FAF5EE] hover:bg-[#F3EBDD] border border-[#E5DBCA] mono text-[10px] text-[#524646]">
+            📁 Project Root Docs
           </button>
         </div>
       </div>
 
       <div id="indexProgress" class="hidden text-xs mono text-[#EC5B38] bg-[#EC5B38]/10 p-2.5 rounded-xl">
-        Indexing in progress, parsing and embedding chunks...
+        Indexing in progress, chunking & embedding...
       </div>
 
       <div class="flex items-center justify-end gap-2 pt-2">
@@ -212,23 +253,29 @@
   </div>
 
   <!-- Footer -->
-  <footer class="border-t border-[#E5DBCA] py-4 text-center mono text-[11px] text-[#8C8575]">
-    NeuralSearch • Local-First Information Retrieval Engine • Built with FastAPI, BM25 & ONNX Runtime
+  <footer class="border-t border-[#E5DBCA] py-4 text-center mono text-[11px] text-[#8C8575] space-y-1">
+    <div>NeuralSearch • 100% Private, Ad-Free Web Search Engine</div>
+    <div class="text-[#A8A492]">Built with FastAPI • ONNX Neural Reranking • Privacy Proxy Architecture</div>
   </footer>
 
   <script>
-    let currentMode = 'hybrid';
+    let currentCategory = 'all';
+    let currentMode = 'web';
     let debounceTimer = null;
     let currentResults = [];
     let selectedIndex = -1;
 
-    // Load initial stats
-    fetchStats();
-
     const searchInput = document.getElementById('searchInput');
     searchInput.addEventListener('input', () => {
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(triggerSearch, 150);
+      debounceTimer = setTimeout(triggerSearch, 250);
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        clearTimeout(debounceTimer);
+        triggerSearch();
+      }
     });
 
     // Keyboard Shortcuts
@@ -256,17 +303,32 @@
       }
     });
 
-    function setMode(mode) {
-      currentMode = mode;
-      ['hybrid', 'bm25', 'dense'].forEach(m => {
-        const btn = document.getElementById('btn' + m.charAt(0).toUpperCase() + m.slice(1));
-        if (m === mode) {
-          btn.className = 'px-3 py-1 rounded-lg font-bold bg-[#EC5B38] text-white transition-colors';
+    function setCategory(cat) {
+      currentCategory = cat;
+      if (cat === 'local') {
+        currentMode = 'hybrid';
+      } else {
+        currentMode = 'web';
+      }
+
+      const tabs = {
+        'all': document.getElementById('tabAll'),
+        'tech': document.getElementById('tabTech'),
+        'news': document.getElementById('tabNews'),
+        'local': document.getElementById('tabLocal'),
+      };
+
+      for (const [key, btn] of Object.entries(tabs)) {
+        if (key === cat) {
+          btn.className = 'px-3 py-1.5 rounded-lg font-bold bg-[#EC5B38] text-white transition-colors flex items-center gap-1.5';
         } else {
-          btn.className = 'px-3 py-1 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors';
+          btn.className = 'px-3 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors flex items-center gap-1.5';
         }
-      });
-      triggerSearch();
+      }
+
+      if (searchInput.value.trim()) {
+        triggerSearch();
+      }
     }
 
     async function triggerSearch() {
@@ -275,13 +337,14 @@
         document.getElementById('emptyState').classList.remove('hidden');
         document.getElementById('telemetryBar').classList.add('hidden');
         document.getElementById('latencyPill').classList.add('hidden');
+        document.getElementById('instantAnswerBox').classList.add('hidden');
         document.getElementById('resultsList').innerHTML = document.getElementById('emptyState').outerHTML;
         currentResults = [];
         return;
       }
 
       const rerank = document.getElementById('rerankToggle').checked;
-      const url = `/api/search?q=${encodeURIComponent(q)}&mode=${currentMode}&rerank=${rerank}`;
+      const url = `/api/search?q=${encodeURIComponent(q)}&mode=${currentMode}&category=${currentCategory}&rerank=${rerank}`;
 
       try {
         const res = await fetch(url);
@@ -296,25 +359,53 @@
       currentResults = data.hits || [];
       selectedIndex = -1;
 
-      // Update Telemetry
-      const tel = data.telemetry;
-      document.getElementById('tBm25').innerText = `${tel.bm25_ms}ms`;
-      document.getElementById('tEmbed').innerText = `${tel.embed_ms}ms`;
-      document.getElementById('tVec').innerText = `${tel.vector_search_ms}ms`;
-      document.getElementById('tRerank').innerText = `${tel.rerank_ms}ms`;
-      document.getElementById('tTotal').innerText = `Total: ${tel.total_ms}ms`;
+      // Update Telemetry & Privacy Counters
+      const tel = data.telemetry || {};
+      document.getElementById('tAdsBlocked').innerText = data.ads_blocked_count || 0;
+      document.getElementById('tTrackersPurged').innerText = data.trackers_purged_count || 0;
+      document.getElementById('tFetch').innerText = `${tel.embed_ms || 0}ms`;
+      document.getElementById('tRerank').innerText = `${tel.rerank_ms || 0}ms`;
+      document.getElementById('tTotal').innerText = `Total: ${tel.total_ms || 0}ms`;
       document.getElementById('telemetryBar').classList.remove('hidden');
 
       const pill = document.getElementById('latencyPill');
-      pill.innerText = `${tel.total_ms}ms`;
+      pill.innerText = `${tel.total_ms || 0}ms`;
       pill.classList.remove('hidden');
 
+      // Render Instant Answer (e.g. Wikipedia)
+      const iaBox = document.getElementById('instantAnswerBox');
+      if (data.instant_answer) {
+        const ia = data.instant_answer;
+        iaBox.innerHTML = `
+          <div class="p-5 rounded-2xl bg-[#FFFFFF] border-2 border-[#E5DBCA] shadow-xs space-y-2.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-lg bg-[#FAF5EE] border border-[#E0D5BE] flex items-center justify-center text-xs font-bold text-[#524646]">W</span>
+                <span class="mono text-[11px] uppercase font-bold text-[#EC5B38] tracking-wider">${ia.source || 'Instant Answer'}</span>
+              </div>
+              <span class="mono text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold">100% Verified Ad-Free</span>
+            </div>
+            <h3 class="text-lg font-bold text-[#3A3131]">${ia.title}</h3>
+            <p class="text-sm text-[#524646] leading-relaxed">${ia.extract}</p>
+            <div class="pt-1">
+              <a href="${ia.url}" target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-[#EC5B38] hover:underline flex items-center gap-1">
+                Read full article on Wikipedia →
+              </a>
+            </div>
+          </div>
+        `;
+        iaBox.classList.remove('hidden');
+      } else {
+        iaBox.classList.add('hidden');
+      }
+
+      // Render Search Results
       const container = document.getElementById('resultsList');
       if (currentResults.length === 0) {
         container.innerHTML = `
-          <div class="text-center py-12 p-4 rounded-2xl bg-[#FFFFFF] border border-[#E5DBCA]">
-            <p class="text-sm font-semibold text-[#3A3131]">No matching documents found</p>
-            <p class="text-xs text-[#7A7465] mt-1">Try alternate search terms or index more files.</p>
+          <div class="text-center py-12 p-6 rounded-2xl bg-[#FFFFFF] border border-[#E5DBCA] space-y-2">
+            <p class="text-base font-bold text-[#3A3131]">No organic web results found</p>
+            <p class="text-xs text-[#7A7465]">Try refining your search terms or verify your internet connection.</p>
           </div>
         `;
         return;
@@ -324,37 +415,53 @@
       currentResults.forEach((hit, idx) => {
         const prov = hit.provenance || {};
         let scoreBadge = '';
-        if (prov.rerank_score !== undefined) {
-          scoreBadge = `<span class="mono text-[11px] text-[#EC5B38] font-bold">Rerank: ${(prov.rerank_score * 100).toFixed(1)}%</span>`;
-        } else if (prov.cosine_similarity !== undefined) {
-          scoreBadge = `<span class="mono text-[11px] text-[#EC5B38] font-bold">Sim: ${prov.cosine_similarity.toFixed(3)}</span>`;
-        } else if (prov.bm25_score !== undefined) {
-          scoreBadge = `<span class="mono text-[11px] text-[#EC5B38] font-bold">BM25: ${prov.bm25_score.toFixed(2)}</span>`;
+        if (prov.rerank_score !== undefined && prov.rerank_score !== null) {
+          scoreBadge = `<span class="mono text-[10px] text-[#EC5B38] bg-[#EC5B38]/10 px-2 py-0.5 rounded border border-[#EC5B38]/20 font-bold">Neural Match: ${(prov.rerank_score * 100).toFixed(0)}%</span>`;
         }
 
-        const path = hit.metadata?.file_path || hit.title;
+        const trackerBadge = (hit.trackers_purged && hit.trackers_purged > 0)
+          ? `<span class="mono text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded font-semibold">${hit.trackers_purged} Trackers Stripped</span>`
+          : `<span class="mono text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-semibold">Clean URL</span>`;
+
+        const isExternal = hit.url && hit.url.startsWith('http');
+        const displayDomain = hit.domain || 'web';
 
         html += `
-          <div id="hit-${idx}" onclick="selectResult(${idx})" class="result-card p-5 rounded-2xl bg-[#FFFFFF] border border-[#E5DBCA] space-y-2 cursor-pointer shadow-xs">
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="mono text-[10px] font-bold text-[#EC5B38] bg-[#EC5B38]/10 px-2 py-0.5 rounded">Rank #${hit.rank}</span>
-                  ${scoreBadge}
-                  <span class="mono text-[10px] text-[#8C8575] truncate max-w-xs">${hit.metadata?.headings || ''}</span>
-                </div>
-                <h3 class="text-base font-bold text-[#3A3131] hover:text-[#EC5B38] transition-colors">${hit.title}</h3>
+          <div id="hit-${idx}" onclick="selectResult(${idx})" class="result-card p-5 rounded-2xl bg-[#FFFFFF] border border-[#E5DBCA] space-y-2.5 cursor-pointer shadow-xs">
+            
+            <!-- Card Header: Domain & Privacy Badges -->
+            <div class="flex items-center justify-between gap-2 text-xs">
+              <div class="flex items-center gap-2 truncate">
+                <span class="w-4 h-4 rounded-full bg-[#FAF5EE] border border-[#E0D5BE] flex items-center justify-center text-[10px] shrink-0">🌐</span>
+                <span class="mono text-xs font-semibold text-[#8C8575] truncate">${hit.display_url || displayDomain}</span>
               </div>
-              <button onclick="event.stopPropagation(); inspectResult(${idx})" class="mono text-[11px] px-2.5 py-1 rounded-md bg-[#FAF5EE] hover:bg-[#F3EBDD] border border-[#E5DBCA] text-[#7A7465] shrink-0 font-semibold transition-colors">
-                Inspect
-              </button>
+              <div class="flex items-center gap-1.5 shrink-0">
+                ${scoreBadge}
+                ${trackerBadge}
+                <button onclick="event.stopPropagation(); inspectResult(${idx})" class="mono text-[11px] px-2 py-0.5 rounded bg-[#FAF5EE] hover:bg-[#F3EBDD] border border-[#E5DBCA] text-[#7A7465] font-semibold transition-colors">
+                  Inspect
+                </button>
+              </div>
             </div>
 
-            <p class="text-sm text-[#524646] leading-relaxed">${hit.snippet || hit.content}</p>
+            <!-- Title & External Link -->
+            <h3 class="text-base font-bold text-[#3A3131]">
+              ${isExternal 
+                ? `<a href="${hit.url}" target="_blank" rel="noopener noreferrer" class="hover:text-[#EC5B38] hover:underline transition-colors">${hit.title}</a>`
+                : hit.title}
+            </h3>
 
-            <div class="flex items-center justify-between pt-1 mono text-[10px] text-[#8C8575]">
-              <span class="truncate max-w-md">${path}</span>
-              <span class="text-[#A8A492]">Click or press 'e' to inspect</span>
+            <!-- Snippet -->
+            <p class="text-sm text-[#524646] leading-relaxed">${hit.snippet || hit.content || ''}</p>
+
+            <!-- Card Footer: Direct Link & Action -->
+            <div class="flex items-center justify-between pt-1 border-t border-[#F5EFE6] mono text-[11px] text-[#8C8575]">
+              <a href="${hit.url}" target="_blank" rel="noopener noreferrer" class="truncate max-w-lg hover:text-[#EC5B38] hover:underline transition-colors">
+                ${hit.url}
+              </a>
+              <button onclick="event.stopPropagation(); copyUrl('${hit.url}', this)" class="text-[#A8A492] hover:text-[#524646] text-[10px] shrink-0">
+                Copy Link
+              </button>
             </div>
           </div>
         `;
@@ -382,21 +489,28 @@
 
       const prov = hit.provenance || {};
       let scoresHtml = '';
-      for (const [key, val] of Object.entries(prov)) {
-        if (typeof val === 'object' && val !== null) {
-          scoresHtml += `<div><span class="text-[#7A7465]">${key}:</span> <span class="text-[#3A3131]">${JSON.stringify(val)}</span></div>`;
-        } else {
-          scoresHtml += `<div class="flex justify-between"><span class="text-[#7A7465]">${key}:</span> <strong class="text-[#3A3131]">${val}</strong></div>`;
-        }
+      scoresHtml += `<div class="flex justify-between"><span class="text-[#7A7465]">Domain:</span> <strong class="text-[#3A3131]">${hit.domain || 'N/A'}</strong></div>`;
+      scoresHtml += `<div class="flex justify-between"><span class="text-[#7A7465]">Trackers Purged:</span> <strong class="text-[#EC5B38]">${hit.trackers_purged || 0}</strong></div>`;
+      scoresHtml += `<div class="flex justify-between"><span class="text-[#7A7465]">Organic Result:</span> <strong class="text-emerald-700">Yes (Ad-Free)</strong></div>`;
+      if (prov.rerank_score !== undefined && prov.rerank_score !== null) {
+        scoresHtml += `<div class="flex justify-between"><span class="text-[#7A7465]">Cross-Encoder Score:</span> <strong class="text-[#EC5B38]">${(prov.rerank_score * 100).toFixed(2)}%</strong></div>`;
       }
 
       document.getElementById('drawerScores').innerHTML = scoresHtml;
-      document.getElementById('drawerContent').innerText = hit.content || '';
+      document.getElementById('drawerUrl').innerText = hit.url || 'N/A';
+      document.getElementById('drawerContent').innerText = hit.snippet || hit.content || '';
       document.getElementById('drawer').classList.remove('translate-x-full');
     }
 
     function closeDrawer() {
       document.getElementById('drawer').classList.add('translate-x-full');
+    }
+
+    function copyUrl(url, btn) {
+      navigator.clipboard.writeText(url);
+      const orig = btn.innerText;
+      btn.innerText = 'Copied!';
+      setTimeout(() => btn.innerText = orig, 1500);
     }
 
     function openIndexModal() {
@@ -425,25 +539,17 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ directory_path: dir })
         });
+        const data = await res.json();
         const msg = data.indexed_files > 0
           ? `Indexing completed!\nNew / Updated: ${data.indexed_files} files\nChunks created: ${data.total_chunks_created}`
           : `Indexing completed!\nAll ${data.skipped_files || 0} files were already up-to-date in the index (SHA-256 hash match, no changes needed)!`;
         alert(msg);
         closeIndexModal();
-        fetchStats();
       } catch (err) {
         alert('Indexing error: ' + err);
       } finally {
         document.getElementById('indexProgress').classList.add('hidden');
       }
-    }
-
-    async function fetchStats() {
-      try {
-        const res = await fetch('/api/stats');
-        const data = await res.json();
-        document.getElementById('totalDocs').innerText = `${data.total_chunks || 0} chunks`;
-      } catch (e) {}
     }
   </script>
 </body>

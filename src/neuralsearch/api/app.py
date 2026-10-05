@@ -87,19 +87,24 @@ async def serve_ui():
 @app.get("/api/search")
 async def search_endpoint(
     q: str = Query(..., description="Query search string"),
-    mode: Literal["hybrid", "bm25", "dense"] = Query("hybrid", description="Retrieval mode"),
-    top_k: int = Query(10, ge=1, le=100, description="Max results to return"),
+    mode: str = Query("web", description="Retrieval mode: web | local | bm25 | dense"),
+    category: str = Query("all", description="Web search category: all | tech | news"),
+    top_k: int = Query(15, ge=1, le=50, description="Max results to return"),
     rerank: bool = Query(True, description="Enable cross-encoder neural reranker"),
 ):
     """
-    Executes hybrid, lexical, or dense semantic search with latency telemetry.
+    Executes live private web search or local hybrid search with privacy audit telemetry.
     """
     if not q.strip():
         return {
             "query": q,
             "mode": mode,
+            "category": category,
             "total_hits": 0,
             "hits": [],
+            "instant_answer": None,
+            "ads_blocked_count": 0,
+            "trackers_purged_count": 0,
             "telemetry": {
                 "bm25_ms": 0.0,
                 "embed_ms": 0.0,
@@ -110,9 +115,61 @@ async def search_endpoint(
             },
         }
 
-    response = engine.search(query=q, mode=mode, top_k=top_k, rerank=rerank)
+    # 1. LIVE INTERNET WEB SEARCH (Default)
+    if mode == "web":
+        web_resp = await engine.search_web(query=q, category=category, top_k=top_k, rerank=rerank)
+        query_terms = engine.inverted_index.tokenizer.tokenize_terms(q)
 
-    # Attach contextual highlighted snippets to each hit
+        formatted_hits = []
+        for hit in web_resp.hits:
+            highlighted_snippet = highlighter.highlight(hit.snippet, query_terms)
+            formatted_hits.append({
+                "rank": hit.rank,
+                "score": hit.score,
+                "title": hit.title,
+                "url": hit.url,
+                "display_url": hit.display_url,
+                "domain": hit.domain,
+                "snippet": highlighted_snippet,
+                "trackers_purged": hit.trackers_purged,
+                "is_organic": hit.is_organic,
+                "provenance": {
+                    "rerank_score": hit.rerank_score,
+                    "domain": hit.domain,
+                    "clean_url": hit.url,
+                },
+            })
+
+        instant_answer_dict = None
+        if web_resp.instant_answer:
+            instant_answer_dict = {
+                "title": web_resp.instant_answer.title,
+                "extract": web_resp.instant_answer.extract,
+                "url": web_resp.instant_answer.url,
+                "source": web_resp.instant_answer.source,
+            }
+
+        return {
+            "query": web_resp.query,
+            "mode": "web",
+            "category": web_resp.category,
+            "total_hits": len(formatted_hits),
+            "hits": formatted_hits,
+            "instant_answer": instant_answer_dict,
+            "ads_blocked_count": web_resp.ads_blocked_count,
+            "trackers_purged_count": web_resp.trackers_purged_count,
+            "telemetry": {
+                "bm25_ms": 0.0,
+                "embed_ms": web_resp.telemetry.embed_ms,  # Web fetch time
+                "vector_search_ms": 0.0,
+                "fusion_ms": 0.0,
+                "rerank_ms": web_resp.telemetry.rerank_ms,
+                "total_ms": web_resp.telemetry.total_ms,
+            },
+        }
+
+    # 2. LOCAL FILE SEARCH (Optional Fallback)
+    response = engine.search(query=q, mode=mode if mode in ("hybrid", "bm25", "dense") else "hybrid", top_k=top_k, rerank=rerank)
     query_terms = engine.inverted_index.tokenizer.tokenize_terms(q)
     results = []
     for hit in response.hits:
@@ -122,6 +179,9 @@ async def search_endpoint(
             "rank": hit.rank,
             "score": hit.score,
             "title": hit.title,
+            "url": "#",
+            "display_url": hit.title,
+            "domain": "local",
             "snippet": snippet,
             "content": hit.content,
             "metadata": hit.metadata,
@@ -131,8 +191,12 @@ async def search_endpoint(
     return {
         "query": response.query,
         "mode": response.mode,
+        "category": "local",
         "total_hits": len(results),
         "hits": results,
+        "instant_answer": None,
+        "ads_blocked_count": 0,
+        "trackers_purged_count": 0,
         "telemetry": {
             "bm25_ms": response.telemetry.bm25_ms,
             "embed_ms": response.telemetry.embed_ms,
