@@ -4,6 +4,7 @@ Reciprocal Rank Fusion, and Cross-Encoder Reranking with microsecond telemetry.
 """
 
 from __future__ import annotations
+import asyncio
 import time
 from dataclasses import dataclass, field
 from typing import Dict, List, Literal, Optional
@@ -13,6 +14,20 @@ from .fusion import FusedCandidate, reciprocal_rank_fusion
 from .inverted_index import InvertedIndex
 from .reranker import CrossEncoderReranker
 from .vector_index import VectorIndex
+from ..web.fetcher import WebSearchFetcher, WebSearchResult, InstantAnswer
+
+
+@dataclass(slots=True)
+class WebSearchResponse:
+    """Live web search response with organic results, instant answers, and privacy metrics."""
+    query: str
+    category: str
+    total_results: int
+    hits: List[WebSearchResult]
+    instant_answer: Optional[InstantAnswer]
+    ads_blocked_count: int
+    trackers_purged_count: int
+    telemetry: SearchTelemetry
 
 
 @dataclass(slots=True)
@@ -64,6 +79,7 @@ class HybridEngine:
         self.dense_encoder = dense_encoder or DenseEncoder()
         self.vector_index = VectorIndex(dimension=384)
         self.reranker = reranker or (CrossEncoderReranker() if enable_reranker else None)
+        self.web_fetcher = WebSearchFetcher()
 
     def add_document(self, doc_id: int, text: str, metadata: Optional[dict] = None) -> None:
         """Indexes a document in both lexical and dense vector indices."""
@@ -234,5 +250,58 @@ class HybridEngine:
             mode=mode,
             total_hits=len(hits),
             hits=hits,
+            telemetry=telemetry,
+        )
+
+    async def search_web(
+        self,
+        query: str,
+        category: str = "all",
+        top_k: int = 15,
+        rerank: bool = True,
+    ) -> WebSearchResponse:
+        """
+        Executes live internet search with tracker purge, ad filtering,
+        instant Wikipedia knowledge card, and on-device neural reranking.
+        """
+        start_total = time.perf_counter()
+        telemetry = SearchTelemetry()
+
+        # 1. Fetch live web results and instant answers concurrently
+        t0 = time.perf_counter()
+        web_task = self.web_fetcher.fetch_web_results(query, category=category)
+        answer_task = self.web_fetcher.fetch_instant_answer(query)
+
+        (raw_results, ads_blocked, trackers_purged), instant_answer = await asyncio.gather(
+            web_task, answer_task
+        )
+        telemetry.embed_ms = round((time.perf_counter() - t0) * 1000.0, 2)  # Network fetch latency
+
+        # 2. Local Neural Cross-Encoder Reranking
+        if rerank and self.reranker and raw_results:
+            t0 = time.perf_counter()
+            pairs = [(query, r.snippet) for r in raw_results]
+            scores = self.reranker.predict(pairs)
+            telemetry.rerank_ms = round((time.perf_counter() - t0) * 1000.0, 2)
+
+            for i, r in enumerate(raw_results):
+                r.rerank_score = scores[i]
+                r.score = scores[i]
+
+            # Re-sort organic results by semantic cross-encoder score
+            raw_results.sort(key=lambda item: item.score, reverse=True)
+            for idx, r in enumerate(raw_results, start=1):
+                r.rank = idx
+
+        telemetry.total_ms = round((time.perf_counter() - start_total) * 1000.0, 2)
+
+        return WebSearchResponse(
+            query=query,
+            category=category,
+            total_results=len(raw_results[:top_k]),
+            hits=raw_results[:top_k],
+            instant_answer=instant_answer,
+            ads_blocked_count=ads_blocked,
+            trackers_purged_count=trackers_purged,
             telemetry=telemetry,
         )
