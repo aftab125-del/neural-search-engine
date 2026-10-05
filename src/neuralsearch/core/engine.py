@@ -76,9 +76,23 @@ class HybridEngine:
     ):
         self.inverted_index = InvertedIndex()
         self.bm25_ranker = BM25Ranker(self.inverted_index)
-        self.dense_encoder = dense_encoder or DenseEncoder()
+
+        self.dense_encoder = dense_encoder
+        if self.dense_encoder is None:
+            try:
+                self.dense_encoder = DenseEncoder()
+            except Exception:
+                self.dense_encoder = None
+
         self.vector_index = VectorIndex(dimension=384)
-        self.reranker = reranker or (CrossEncoderReranker() if enable_reranker else None)
+
+        self.reranker = reranker
+        if self.reranker is None and enable_reranker:
+            try:
+                self.reranker = CrossEncoderReranker()
+            except Exception:
+                self.reranker = None
+
         self.web_fetcher = WebSearchFetcher()
 
     def add_document(self, doc_id: int, text: str, metadata: Optional[dict] = None) -> None:
@@ -91,8 +105,9 @@ class HybridEngine:
         self.inverted_index.add_document(doc_id, text, meta)
 
         # 2. Dense vector index
-        vec = self.dense_encoder.encode(text)
-        self.vector_index.add_vector(doc_id, vec)
+        if self.dense_encoder is not None:
+            vec = self.dense_encoder.encode(text)
+            self.vector_index.add_vector(doc_id, vec)
 
     def remove_document(self, doc_id: int) -> bool:
         """Removes a document from both indices."""
@@ -124,7 +139,7 @@ class HybridEngine:
             telemetry.bm25_ms = round((time.perf_counter() - t0) * 1000.0, 2)
 
         # 2. Dense Vector Retrieval
-        if mode in ("hybrid", "dense"):
+        if mode in ("hybrid", "dense") and self.dense_encoder is not None:
             # Embed query
             t0 = time.perf_counter()
             q_vec = self.dense_encoder.encode(query)
