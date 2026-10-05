@@ -59,11 +59,16 @@ To guarantee complete user anonymity, every outbound request from NeuralSearch t
 
 ---
 
-### 2.2 Web Search Fetcher (`web/fetcher.py`)
-Queries live internet sources using lightweight, privacy-respecting endpoints:
-* **DuckDuckGo Lite / HTML Engine**: Fetches live web results without JavaScript trackers or user cookies.
-* **Wikipedia API**: Real-time factual direct-knowledge extraction for definition and entity queries.
-* **Tech & Academic Fallback**: Specialized queries targeted at developer hubs (GitHub, StackOverflow, ArXiv).
+### 2.2 Multi-Modal Web Search Fetcher (`web/fetcher.py`)
+Queries live internet sources across all major Google-style search modalities:
+* **All Web Search**: Multi-engine retrieval with Cross-Encoder joint-attention neural reranking.
+* **Image Search**: High-resolution image retrieval with direct image URLs, thumbnails, and dimension detection.
+* **Video Search**: Live video search with YouTube thumbnail extraction and platform playback routing.
+* **News Search**: Real-time breaking news via Google News RSS syndication with publication sources and timestamps.
+* **Shopping Search**: E-commerce product search with price extraction (`$XX.XX`) and direct merchant store links.
+* **Photo / Visual Search**: Computer vision inspection (resolution, aspect ratio, perceptual hash) and reverse image search matching.
+* **Query Autocomplete**: Fast query suggestions (<50ms) as the user types.
+* **Wikipedia Instant Answers**: Real-time factual direct-knowledge extraction for definition and entity queries.
 
 ---
 

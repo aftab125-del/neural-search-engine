@@ -46,17 +46,22 @@ Commercial search engines (Google, Bing) operate on an ad-surveillance business 
   - **Dense Semantic Embeddings**: Captures deeper meaning and intent using quantized `all-MiniLM-L6-v2`.
   - **Cross-Encoder Reranker**: Joint query-snippet attention (`ms-marco-MiniLM-L-6-v2`) to place the most genuinely informative web result at Rank #1.
 
-### Feature 4: Web Search Ergonomics & Minimalist UI
-* **Search Categories / Tabs**:
-  - `All Web` (General internet search)
-  - `Tech & Code` (GitHub, StackOverflow, documentation, papers)
-  - `News & Articles` (Recent publications)
-* **Web Result Cards**:
-  - Favicon and clear domain breadcrumb (`github.com/fastapi/fastapi`).
-  - Direct, unmonitored external link (no tracking redirect hops like Google's `google.com/url?q=...`).
-  - Highlighted search snippet with keyword matches.
-  - Provenance & privacy tags (`Organic Result`, `Zero Trackers`, `99.2% Match`).
-* **Instant Search-as-You-Type** with keyboard navigation (`/`, `j/k`, `Enter`).
+### Feature 4: Google-Style Multi-Modal Search Verticals
+* **All Web**: General live internet search with on-device Cross-Encoder neural reranker and Wikipedia Instant Answer cards.
+* **Images**: High-resolution image search grid with dimensions badges, hover previews, and full-resolution lightbox viewer.
+* **Videos**: Video search with video thumbnails, duration pills, YouTube / web platform badges, and direct playback links.
+* **News**: Real-time breaking news via Google News RSS syndication with publication sources, timestamps ("X hours ago"), and article snippets.
+* **Shopping**: Commercial product search displaying item pricing (`$XX.XX`), merchant store badges (Amazon, Best Buy, Walmart, eBay), and direct store links stripped of affiliate tracking parameters.
+* **Local Docs**: Offline search across your local project code, notes, and PDF/Markdown files using BM25 and Dense vector embeddings.
+
+### Feature 5: Photo Search (Visual Search / Google Lens Equivalent)
+* Integrated camera button in the search bar allowing users to search by image.
+* **Drag-and-Drop Image Upload** or **Image URL Paste**.
+* **On-Device Computer Vision Analysis**: Extracts format, resolution, aspect ratio, and visual perceptual hash.
+* **Visual Match Discovery**: Finds visually matching and similar photos across the web with clean 1-click external privacy reverse search links (Google Lens, Bing Visual, TinEye).
+
+### Feature 6: Instant Query Autocomplete
+* Real-time search suggestions dropdown as the user types with full keyboard navigation (Arrow Up, Arrow Down, Enter to select).
 
 ---
 
