@@ -88,6 +88,19 @@ app.add_middleware(
 )
 
 
+@app.middleware("http")
+async def normalize_vercel_paths(request, call_next):
+    """Normalizes paths rewritten by Vercel serverless proxy."""
+    raw_path = request.scope.get("path", "")
+    if raw_path in ("/api/index.py", "/api/index", "/api/index.py/", "/api/index/"):
+        request.scope["path"] = "/"
+    elif raw_path.startswith("/api/index.py/"):
+        request.scope["path"] = raw_path[len("/api/index.py") :]
+    elif raw_path.startswith("/api/index/"):
+        request.scope["path"] = raw_path[len("/api/index") :]
+    return await call_next(request)
+
+
 class IndexDirectoryRequest(BaseModel):
     directory_path: str
     recursive: bool = True
@@ -98,6 +111,8 @@ class IndexFileRequest(BaseModel):
 
 
 @app.get("/", response_class=HTMLResponse)
+@app.get("/api/index.py", response_class=HTMLResponse)
+@app.get("/api/index", response_class=HTMLResponse)
 async def serve_ui():
     """Serves the light minimalist search web UI."""
     possible_paths = [
