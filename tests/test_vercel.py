@@ -41,3 +41,12 @@ def test_vercel_endpoints_and_health():
     ac_resp = client.get("/api/autocomplete?q=python")
     assert ac_resp.status_code == 200
     assert "suggestions" in ac_resp.json()
+
+    # 4. Vercel internal rewritten paths
+    rewritten_ui = client.get("/api/index.py")
+    assert rewritten_ui.status_code == 200
+    assert "<!DOCTYPE html>" in rewritten_ui.text
+
+    rewritten_health = client.get("/api/index.py/api/health")
+    assert rewritten_health.status_code == 200
+    assert rewritten_health.json()["status"] == "healthy"
