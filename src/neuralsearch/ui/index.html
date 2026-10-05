@@ -341,18 +341,18 @@
       
       <div class="space-y-1.5">
         <label class="mono text-[11px] text-[#7A7465] font-semibold">Directory Path</label>
-        <input id="dirPathInput" type="text" placeholder="e.g. D:/neural-search-engine/src" 
+        <input id="dirPathInput" type="text" placeholder="e.g. ./src or docs" 
                class="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF5EE] border border-[#E5DBCA] text-xs text-[#3A3131] outline-none focus:border-[#EC5B38]">
       </div>
 
       <div class="space-y-1">
         <span class="mono text-[10px] text-[#8C8575] uppercase font-bold tracking-wider">Quick Presets:</span>
         <div class="flex flex-wrap gap-1.5">
-          <button type="button" onclick="setDirPath('D:/neural-search-engine/src')" class="px-2 py-1 rounded-md bg-[#FAF5EE] hover:bg-[#F3EBDD] border border-[#E5DBCA] mono text-[10px] text-[#524646]">
-            📁 Project Source (src)
+          <button type="button" onclick="setDirPath('./src')" class="px-2 py-1 rounded-md bg-[#FAF5EE] hover:bg-[#F3EBDD] border border-[#E5DBCA] mono text-[10px] text-[#524646]">
+            📁 Project Source (./src)
           </button>
-          <button type="button" onclick="setDirPath('D:/neural-search-engine')" class="px-2 py-1 rounded-md bg-[#FAF5EE] hover:bg-[#F3EBDD] border border-[#E5DBCA] mono text-[10px] text-[#524646]">
-            📁 Project Root Docs
+          <button type="button" onclick="setDirPath('.')" class="px-2 py-1 rounded-md bg-[#FAF5EE] hover:bg-[#F3EBDD] border border-[#E5DBCA] mono text-[10px] text-[#524646]">
+            📁 Project Root Docs (.)
           </button>
         </div>
       </div>

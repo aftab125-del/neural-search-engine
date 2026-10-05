@@ -45,3 +45,5 @@ data/
 *.db
 *.npy
 *.onnx
+
+.vercel

@@ -13,14 +13,31 @@ import numpy as np
 from .chunker import Chunk
 
 
+import os
+
+BASE_DIR = Path(__file__).resolve().parents[3]
+DEFAULT_DB_PATH = (
+    Path("/tmp/index.db")
+    if bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
+    else BASE_DIR / "data" / "index.db"
+)
+
+
 class SQLiteStore:
     """
     Embedded relational and vector blob storage manager.
     """
 
-    def __init__(self, db_path: Path | str = "D:/neural-search-engine/data/index.db"):
-        self.db_path = Path(db_path)
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+    def __init__(self, db_path: Path | str | None = None):
+        if db_path is not None:
+            self.db_path = Path(db_path)
+        else:
+            self.db_path = DEFAULT_DB_PATH
+        try:
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            self.db_path = Path("/tmp/index.db")
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._init_db()
 
     @contextmanager

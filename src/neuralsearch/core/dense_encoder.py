@@ -8,10 +8,18 @@ import os
 from pathlib import Path
 from typing import List, Union
 import numpy as np
-import onnxruntime as ort
-from tokenizers import Tokenizer as HFTokenizer
 
-DEFAULT_MODEL_DIR = Path("D:/neural-search-engine/.cache/models/all-MiniLM-L6-v2")
+try:
+    import onnxruntime as ort
+    from tokenizers import Tokenizer as HFTokenizer
+    HAS_ONNX = True
+except ImportError:
+    ort = None
+    HFTokenizer = None
+    HAS_ONNX = False
+
+BASE_DIR = Path(__file__).resolve().parents[3]
+DEFAULT_MODEL_DIR = BASE_DIR / ".cache" / "models" / "all-MiniLM-L6-v2"
 
 
 class DenseEncoder:
@@ -27,6 +35,9 @@ class DenseEncoder:
         max_length: int = 256,
         num_threads: int = 4,
     ):
+        if not HAS_ONNX:
+            raise RuntimeError("onnxruntime and tokenizers packages are required for DenseEncoder.")
+
         base_dir = DEFAULT_MODEL_DIR
         self.model_path = Path(model_path) if model_path else base_dir / "onnx" / "model_quantized.onnx"
         self.tokenizer_path = Path(tokenizer_path) if tokenizer_path else base_dir / "tokenizer.json"

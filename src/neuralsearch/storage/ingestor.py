@@ -7,6 +7,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 from typing import List, Optional
+import numpy as np
 from .chunker import MarkdownChunker
 from .sqlite_store import SQLiteStore
 from ..core.engine import HybridEngine
@@ -83,7 +84,10 @@ class IngestionManager:
 
         # 2. Batch embed chunks
         texts_to_embed = [c.content for c in chunks]
-        embeddings = self.engine.dense_encoder.encode_batch(texts_to_embed)
+        if self.engine.dense_encoder is not None:
+            embeddings = self.engine.dense_encoder.encode_batch(texts_to_embed)
+        else:
+            embeddings = [np.zeros(384, dtype=np.float32) for _ in chunks]
 
         # 3. Save to SQLite
         chunk_ids = self.store.save_document(

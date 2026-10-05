@@ -4,6 +4,7 @@ Multi-modal search engine supporting All Web, Images, Videos, News, Shopping, Ph
 """
 
 from __future__ import annotations
+import os
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -18,10 +19,21 @@ from ..core.highlighter import SnippetHighlighter
 from ..storage.ingestor import IngestionManager
 from ..storage.sqlite_store import SQLiteStore
 
-# Paths
-BASE_DIR = Path("D:/neural-search-engine")
-DB_PATH = BASE_DIR / "data" / "index.db"
-UI_PATH = Path(__file__).parent.parent / "ui" / "index.html"
+# Paths & Environment
+BASE_DIR = Path(__file__).resolve().parents[3]
+IS_SERVERLESS = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
+
+if IS_SERVERLESS:
+    DB_PATH = Path("/tmp/index.db")
+else:
+    data_dir = BASE_DIR / "data"
+    try:
+        data_dir.mkdir(parents=True, exist_ok=True)
+        DB_PATH = data_dir / "index.db"
+    except OSError:
+        DB_PATH = Path("/tmp/index.db")
+
+UI_PATH = Path(__file__).resolve().parents[1] / "ui" / "index.html"
 
 # Global state
 store = SQLiteStore(db_path=DB_PATH)
@@ -33,11 +45,15 @@ highlighter = SnippetHighlighter()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Rehydrate in-memory engine from SQLite
-    restored = ingestor.rehydrate_engine()
-    print(f"[NeuralSearch] Rehydrated {restored} chunks from persistent store.")
+    try:
+        restored = ingestor.rehydrate_engine()
+        print(f"[NeuralSearch] Rehydrated {restored} chunks from persistent store.")
+    except Exception as e:
+        print(f"[NeuralSearch] Note: Store rehydration skipped ({e})")
+        restored = 0
 
-    # Seed documentation if empty
-    if restored == 0:
+    # Seed documentation if empty (and not in restricted serverless mode)
+    if restored == 0 and not IS_SERVERLESS:
         seed_files = [
             BASE_DIR / "PRD.md",
             BASE_DIR / "ARCHITECTURE.md",
@@ -45,9 +61,12 @@ async def lifespan(app: FastAPI):
             BASE_DIR / "PHASES.md",
         ]
         for f in seed_files:
-            if f.exists():
-                ingestor.ingest_file(f)
-        print(f"[NeuralSearch] Seeded database with project documentation ({len(seed_files)} files).")
+            try:
+                if f.exists():
+                    ingestor.ingest_file(f)
+            except Exception as e:
+                print(f"[NeuralSearch] Note: Seeding {f.name} skipped ({e})")
+        print(f"[NeuralSearch] Database initialized.")
 
     yield
     print("[NeuralSearch] Shutting down cleanly.")
@@ -81,9 +100,16 @@ class IndexFileRequest(BaseModel):
 @app.get("/", response_class=HTMLResponse)
 async def serve_ui():
     """Serves the light minimalist search web UI."""
-    if not UI_PATH.exists():
-        raise HTTPException(status_code=404, detail="UI index.html not found")
-    return HTMLResponse(content=UI_PATH.read_text(encoding="utf-8"))
+    possible_paths = [
+        UI_PATH,
+        BASE_DIR / "src" / "neuralsearch" / "ui" / "index.html",
+        Path(__file__).resolve().parent.parent / "ui" / "index.html",
+        Path.cwd() / "src" / "neuralsearch" / "ui" / "index.html",
+    ]
+    for p in possible_paths:
+        if p.exists():
+            return HTMLResponse(content=p.read_text(encoding="utf-8"))
+    raise HTTPException(status_code=404, detail="UI index.html not found")
 
 
 @app.get("/api/search")
@@ -395,8 +421,9 @@ async def health():
     return {
         "status": "healthy",
         "models": {
-            "bi_encoder": "all-MiniLM-L6-v2 (quantized ONNX)",
-            "reranker": "ms-marco-MiniLM-L-6-v2 (quantized ONNX)",
+            "bi_encoder": "all-MiniLM-L6-v2 (quantized ONNX)" if engine.dense_encoder else "serverless/organic-mode",
+            "reranker": "ms-marco-MiniLM-L-6-v2 (quantized ONNX)" if engine.reranker else "serverless/organic-mode",
         },
-        "features": ["all", "images", "videos", "news", "shopping", "photo_search", "autocomplete"],
+        "features": ["all", "images", "videos", "news", "shopping", "photo_search", "autocomplete", "direct_url_probe"],
+        "serverless": IS_SERVERLESS,
     }
