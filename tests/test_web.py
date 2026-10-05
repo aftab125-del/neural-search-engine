@@ -144,3 +144,15 @@ def test_visual_search_metadata():
     assert res.detected_info["format"] == "PNG"
     assert "google_lens" in res.reverse_search_links
     assert "bing_visual" in res.reverse_search_links
+
+
+def test_direct_url_probe():
+    async def _run():
+        fetcher = WebSearchFetcher(timeout=5.0)
+        return await fetcher.probe_direct_url("uta-verse.vercel.app")
+
+    hit = asyncio.run(_run())
+    assert hit is not None
+    assert "UTA-VERSE" in hit.title
+    assert hit.url == "https://uta-verse.vercel.app"
+    assert hit.score == 1.0

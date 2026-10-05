@@ -277,6 +277,11 @@ class HybridEngine:
         )
         telemetry.embed_ms = round((time.perf_counter() - t0) * 1000.0, 2)  # Network fetch latency
 
+        # Check if direct live navigational result is present (e.g. uta-verse.vercel.app)
+        direct_hit = None
+        if raw_results and raw_results[0].score >= 0.999 and "Direct Destination" in raw_results[0].display_url:
+            direct_hit = raw_results.pop(0)
+
         # 2. Local Neural Cross-Encoder Reranking
         if rerank and self.reranker and raw_results:
             t0 = time.perf_counter()
@@ -290,8 +295,13 @@ class HybridEngine:
 
             # Re-sort organic results by semantic cross-encoder score
             raw_results.sort(key=lambda item: item.score, reverse=True)
-            for idx, r in enumerate(raw_results, start=1):
-                r.rank = idx
+
+        # Pin direct navigational hit at Rank 1
+        if direct_hit:
+            raw_results.insert(0, direct_hit)
+
+        for idx, r in enumerate(raw_results, start=1):
+            r.rank = idx
 
         telemetry.total_ms = round((time.perf_counter() - start_total) * 1000.0, 2)
 
