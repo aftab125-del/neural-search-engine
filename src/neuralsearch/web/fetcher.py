@@ -129,6 +129,63 @@ class WebSearchFetcher:
         }
 
     # -------------------------------------------------------------------------
+    # 0. DIRECT URL & DOMAIN RESOLUTION (Navigational Target)
+    # -------------------------------------------------------------------------
+    async def probe_direct_url(self, query: str) -> Optional[WebSearchResult]:
+        """
+        Probes a direct URL or domain (e.g. 'uta-verse.vercel.app', 'https://github.com/...').
+        If the site is live, extracts the live title, meta description, and generates a verified direct navigational result.
+        """
+        clean = query.strip()
+        domain_pattern = r'^(?:https?:\/\/)?([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(?::\d+)?(?:\/.*)?$'
+
+        if not (clean.startswith("http://") or clean.startswith("https://") or re.match(domain_pattern, clean)):
+            return None
+
+        target_url = clean if clean.startswith("http") else f"https://{clean}"
+        headers = self._get_headers()
+
+        async with httpx.AsyncClient(timeout=4.0, follow_redirects=True) as client:
+            try:
+                resp = await client.get(target_url, headers=headers)
+                if resp.status_code < 400:
+                    final_url = str(resp.url)
+                    parsed = urllib.parse.urlparse(final_url)
+                    domain = parsed.netloc or clean
+
+                    # Extract title
+                    title_m = re.search(r'<title>(.*?)</title>', resp.text, re.DOTALL | re.IGNORECASE)
+                    if title_m:
+                        raw_title = html.unescape(re.sub(r'<[^>]+>', '', title_m.group(1)).strip())
+                        title = raw_title if raw_title else domain
+                    else:
+                        title = domain
+
+                    # Extract description
+                    desc_m = re.search(r'<meta[^>]+name=["\']description["\'][^>]+content=["\']([^"\']*)["\']', resp.text, re.IGNORECASE)
+                    if not desc_m:
+                        desc_m = re.search(r'<meta[^>]+property=["\']og:description["\'][^>]+content=["\']([^"\']*)["\']', resp.text, re.IGNORECASE)
+
+                    desc = html.unescape(desc_m.group(1)).strip() if desc_m else f"Direct destination website for {final_url}. Click to open."
+
+                    return WebSearchResult(
+                        title=f"{title}",
+                        url=final_url,
+                        display_url=f"{domain} > Direct Destination",
+                        domain=domain,
+                        snippet=desc,
+                        score=1.0,
+                        rank=1,
+                        rerank_score=1.0,
+                        trackers_purged=0,
+                        is_organic=True,
+                    )
+            except Exception:
+                pass
+
+        return None
+
+    # -------------------------------------------------------------------------
     # 1. ORGANIC WEB SEARCH
     # -------------------------------------------------------------------------
     async def fetch_web_results(
@@ -148,6 +205,11 @@ class WebSearchFetcher:
         results: List[WebSearchResult] = []
         ads_blocked = 0
         trackers_stripped = 0
+
+        # Check for direct live navigational target first (e.g. uta-verse.vercel.app)
+        direct_probe = await self.probe_direct_url(query)
+        if direct_probe:
+            results.append(direct_probe)
 
         async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=True) as client:
             try:
@@ -709,9 +771,20 @@ class WebSearchFetcher:
     # -------------------------------------------------------------------------
     async def fetch_instant_answer(self, query: str) -> Optional[InstantAnswer]:
         """
-        Retrieves direct knowledge cards (e.g. Wikipedia summary) for informational queries.
+        Retrieves direct knowledge cards (e.g. Wikipedia summary or direct live site card) for queries.
         """
         clean_q = query.strip()
+
+        # Check if query is a direct URL or domain (e.g. uta-verse.vercel.app)
+        direct_probe = await self.probe_direct_url(clean_q)
+        if direct_probe:
+            return InstantAnswer(
+                title=direct_probe.title,
+                extract=direct_probe.snippet,
+                url=direct_probe.url,
+                source="Direct Live Website",
+            )
+
         words = clean_q.split()
         candidate = " ".join(words[:4]) if len(words) > 4 else clean_q
 
