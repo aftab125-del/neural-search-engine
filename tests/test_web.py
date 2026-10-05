@@ -16,7 +16,6 @@ def test_ad_blocker_strips_utm_and_click_ids():
 
 
 def test_ad_blocker_unmasks_bing_redirect():
-    # Base64 encoded 'https://fastapi.tiangolo.com/'
     bing_redirect = "https://www.bing.com/ck/a?!&&p=123&u=a1aHR0cHM6Ly9mYXN0YXBpLnRpYW5nb2xvLmNvbS8&ntb=1"
     sanitized = AdBlocker.clean_url(bing_redirect)
     assert not sanitized.is_ad
@@ -68,3 +67,80 @@ def test_live_web_search():
     assert top.title
     assert top.url.startswith("http")
     assert top.domain
+
+
+def test_image_search():
+    async def _run():
+        fetcher = WebSearchFetcher(timeout=8.0)
+        return await fetcher.fetch_image_results("mountain landscape", top_k=5)
+
+    images = asyncio.run(_run())
+    assert isinstance(images, list)
+    if images:
+        top = images[0]
+        assert top.image_url.startswith("http")
+        assert top.title
+
+
+def test_video_search():
+    async def _run():
+        fetcher = WebSearchFetcher(timeout=8.0)
+        return await fetcher.fetch_video_results("python tutorial", top_k=5)
+
+    videos = asyncio.run(_run())
+    assert isinstance(videos, list)
+    if videos:
+        top = videos[0]
+        assert top.title
+        assert top.url.startswith("http")
+
+
+def test_news_search():
+    async def _run():
+        fetcher = WebSearchFetcher(timeout=8.0)
+        return await fetcher.fetch_news_results("technology", top_k=5)
+
+    news = asyncio.run(_run())
+    assert isinstance(news, list)
+    if news:
+        top = news[0]
+        assert top.title
+        assert top.url.startswith("http")
+        assert top.source
+
+
+def test_shopping_search():
+    async def _run():
+        fetcher = WebSearchFetcher(timeout=8.0)
+        return await fetcher.fetch_shopping_results("laptop", top_k=5)
+
+    products = asyncio.run(_run())
+    assert isinstance(products, list)
+    if products:
+        top = products[0]
+        assert top.title
+        assert top.price
+
+
+def test_autocomplete():
+    async def _run():
+        fetcher = WebSearchFetcher(timeout=4.0)
+        return await fetcher.fetch_autocomplete("python")
+
+    suggestions = asyncio.run(_run())
+    assert isinstance(suggestions, list)
+    assert len(suggestions) > 0
+    assert any("python" in s.lower() for s in suggestions)
+
+
+def test_visual_search_metadata():
+    async def _run():
+        fetcher = WebSearchFetcher(timeout=5.0)
+        # 100 bytes of dummy image data
+        dummy_png = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x01\x00\x00\x00\x01\x00\x08\x02\x00\x00\x00"
+        return await fetcher.fetch_visual_search(image_bytes=dummy_png)
+
+    res = asyncio.run(_run())
+    assert res.detected_info["format"] == "PNG"
+    assert "google_lens" in res.reverse_search_links
+    assert "bing_visual" in res.reverse_search_links

@@ -73,13 +73,24 @@ flowchart TD
 ### 3. Wikipedia Instant Answers
 * Direct integration with Wikipedia's REST knowledge API to extract concise encyclopedic definitions, historical context, and summary knowledge cards instantly.
 
-### 4. Category-Specific Filters
-* **🌐 All Web**: General purpose comprehensive web search.
-* **💻 Tech & Code**: Targets programming documentation, GitHub repositories, and developer tutorials.
-* **📰 News**: Filters for current events and updates.
+### 4. Google-Style Multi-Modal Search Verticals
+* **🌐 All Web**: Comprehensive live web search with on-device Cross-Encoder neural reranking and Wikipedia instant answer cards.
+* **🖼️ Images**: High-resolution image search grid with dimensions badges, hover previews, and full-resolution lightbox viewer.
+* **🎬 Videos**: Video search returning rich video cards with platform badges (YouTube, Web Video), duration tags, and direct playback links.
+* **📰 News**: Real-time breaking news via Google News RSS syndication with publication sources, timestamps ("X hours ago"), and article snippets.
+* **🛍️ Shopping**: Product search displaying item pricing (`$XX.XX`), merchant store badges (Amazon, Best Buy, Walmart, eBay), and direct store links stripped of affiliate tracking parameters.
 * **📁 Local Docs**: Offline search across your local project code, notes, and PDF/Markdown files using BM25 and Dense vector embeddings.
 
-### 5. Scandinavian Light Minimalist Aesthetic
+### 5. 📷 Photo Search (Google Lens Equivalent)
+* Integrated camera button in the search bar allowing users to search by image.
+* **Drag-and-Drop Image Upload** or **Image URL Paste**.
+* **On-Device Computer Vision Analysis**: Extracts format, resolution, aspect ratio, and visual perceptual hash.
+* **Visual Match Discovery**: Finds visually matching and similar photos across the web with clean 1-click external privacy reverse search links (Google Lens, Bing Visual, TinEye).
+
+### 6. ⚡ Instant Query Autocomplete
+* Real-time search suggestions dropdown as the user types with full keyboard navigation (Arrow Up, Arrow Down, Enter to select).
+
+### 7. Scandinavian Light Minimalist Aesthetic
 * **Canvas**: `#FCF2E5` (Warm Alabaster Cream)
 * **Surfaces**: `#FFFFFF` / `#FAF5EE` (Crisp Floating White Cards)
 * **Typography**: `#3A3131` / `#524646` (Deep Charcoal Espresso)

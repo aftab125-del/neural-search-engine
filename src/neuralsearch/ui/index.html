@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NeuralSearch • Private & Ad-Free Web Search</title>
+  <title>NeuralSearch • Private Multi-Modal Web Search</title>
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
@@ -31,23 +31,28 @@
       box-shadow: 0 0 0 2px rgba(236, 91, 56, 0.2);
     }
 
-    .custom-scroll::-webkit-scrollbar {
-      width: 6px;
+    .image-tile {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    .custom-scroll::-webkit-scrollbar-thumb {
-      background-color: #E0D5BE;
-      border-radius: 4px;
+    .image-tile:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 24px -6px rgba(82, 70, 70, 0.15);
+    }
+
+    .autocomplete-item.active {
+      background-color: #FAF5EE;
+      color: #EC5B38;
     }
   </style>
 </head>
 <body class="bg-[#FCF2E5] text-[#524646] min-h-screen antialiased flex flex-col justify-between">
   
   <!-- Main Container -->
-  <div class="max-w-4xl mx-auto w-full p-4 sm:p-6 lg:p-8 space-y-6">
+  <div class="max-w-5xl mx-auto w-full p-4 sm:p-6 lg:p-8 space-y-5">
 
     <!-- Top Navigation Header -->
     <header class="flex flex-wrap items-center justify-between border-b border-[#E5DBCA] pb-4 gap-3">
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 cursor-pointer" onclick="resetToHome()">
         <div class="w-10 h-10 rounded-2xl bg-[#EC5B38] flex items-center justify-center font-extrabold text-white text-lg shadow-md shadow-[#EC5B38]/20">
           N
         </div>
@@ -59,7 +64,7 @@
               Private & Ad-Free
             </span>
           </div>
-          <p class="text-xs text-[#8C8575]">Live Web Retrieval • Zero Trackers • Zero Ads • On-Device Neural Reranking</p>
+          <p class="text-xs text-[#8C8575]">All Web • Images • Videos • News • Shopping • Photo Search</p>
         </div>
       </div>
 
@@ -76,103 +81,219 @@
       </div>
     </header>
 
-    <!-- Search Hero Section -->
+    <!-- Search Hero & Category Bar -->
     <div class="space-y-3">
-      <!-- Search Input Bar -->
+      
+      <!-- Search Input Bar with Google Lens Camera Icon -->
       <div class="relative">
         <div class="flex items-center gap-3 px-4 py-3.5 sm:py-4 rounded-2xl bg-[#FFFFFF] border-2 border-[#E0D5BE] focus-within:border-[#EC5B38] focus-within:ring-4 focus-within:ring-[#EC5B38]/10 transition-all shadow-md shadow-[#524646]/5">
+          
+          <!-- Search Icon -->
           <svg class="w-5 h-5 text-[#A8A492] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
           </svg>
+          
+          <!-- Search Input -->
           <input id="searchInput" type="text" placeholder="Search the web freely without tracking, ads, or cookies..." 
                  class="w-full bg-transparent text-[#3A3131] text-base placeholder-[#A8A492] outline-none font-medium"
-                 autofocus>
+                 autocomplete="off" autofocus>
+          
+          <!-- Clear Button -->
+          <button id="btnClear" onclick="clearSearch()" class="hidden text-[#A8A492] hover:text-[#3A3131] p-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+
+          <!-- Photo Search (Google Lens Equivalent) Button -->
+          <button onclick="openPhotoModal()" title="Search by Image (Photo Search)" class="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#FAF5EE] hover:bg-[#F3EBDD] border border-[#E0D5BE] text-xs font-semibold text-[#524646] transition-colors shrink-0">
+            <svg class="w-4 h-4 text-[#EC5B38]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            <span class="hidden sm:inline text-[11px]">Photo Search</span>
+          </button>
+
           <div class="flex items-center gap-1.5 shrink-0">
-            <span id="latencyPill" class="hidden mono text-xs text-[#EC5B38] font-bold bg-[#EC5B38]/10 px-2.5 py-1 rounded-lg border border-[#EC5B38]/20">0ms</span>
+            <span id="latencyPill" class="hidden mono text-xs text-[#EC5B38] font-bold bg-[#EC5B38]/10 px-2 py-0.5 rounded-lg border border-[#EC5B38]/20">0ms</span>
             <kbd class="hidden sm:inline-block mono text-[11px] text-[#7A7465] bg-[#FAF5EE] px-2 py-1 rounded-md border border-[#E0D5BE]">/</kbd>
           </div>
         </div>
+
+        <!-- Autocomplete Suggestions Dropdown -->
+        <div id="autocompleteBox" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-[#FFFFFF] border border-[#E5DBCA] rounded-2xl shadow-xl z-40 overflow-hidden divide-y divide-[#F5EFE6]">
+          <ul id="autocompleteList" class="py-1"></ul>
+        </div>
       </div>
 
-      <!-- Category Tabs & Controls -->
+      <!-- Google-Style Category Navigation Tabs -->
       <div class="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
-        <!-- Search Scope Tabs -->
-        <div class="flex items-center gap-1 bg-[#FFFFFF] p-1 rounded-xl border border-[#E5DBCA] shadow-xs">
-          <button onclick="setCategory('all')" id="tabAll" class="px-3 py-1.5 rounded-lg font-bold bg-[#EC5B38] text-white transition-colors flex items-center gap-1.5">
-            <span>🌐</span> All Web
+        <div class="flex items-center gap-1 bg-[#FFFFFF] p-1 rounded-xl border border-[#E5DBCA] shadow-xs overflow-x-auto">
+          <button onclick="setCategory('all')" id="tabAll" class="px-3.5 py-1.5 rounded-lg font-bold bg-[#EC5B38] text-white transition-colors flex items-center gap-1.5 whitespace-nowrap">
+            <span>🌐</span> All
           </button>
-          <button onclick="setCategory('tech')" id="tabTech" class="px-3 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors flex items-center gap-1.5">
-            <span>💻</span> Tech & Code
+          <button onclick="setCategory('images')" id="tabImages" class="px-3.5 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors flex items-center gap-1.5 whitespace-nowrap">
+            <span>🖼️</span> Images
           </button>
-          <button onclick="setCategory('news')" id="tabNews" class="px-3 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors flex items-center gap-1.5">
+          <button onclick="setCategory('videos')" id="tabVideos" class="px-3.5 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors flex items-center gap-1.5 whitespace-nowrap">
+            <span>🎬</span> Videos
+          </button>
+          <button onclick="setCategory('news')" id="tabNews" class="px-3.5 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors flex items-center gap-1.5 whitespace-nowrap">
             <span>📰</span> News
           </button>
-          <button onclick="setCategory('local')" id="tabLocal" class="px-3 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors flex items-center gap-1.5">
+          <button onclick="setCategory('shopping')" id="tabShopping" class="px-3.5 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors flex items-center gap-1.5 whitespace-nowrap">
+            <span>🛍️</span> Shopping
+          </button>
+          <button onclick="setCategory('local')" id="tabLocal" class="px-3.5 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors flex items-center gap-1.5 whitespace-nowrap">
             <span>📁</span> Local Docs
           </button>
         </div>
 
         <!-- Filter Controls -->
-        <div class="flex items-center gap-3">
+        <div id="rerankControl" class="flex items-center gap-2">
           <label class="flex items-center gap-1.5 cursor-pointer text-xs text-[#7A7465]">
             <input type="checkbox" id="rerankToggle" checked onchange="triggerSearch()" class="rounded border-[#E5DBCA] text-[#EC5B38] focus:ring-[#EC5B38]">
-            <span class="font-medium">Neural Reranker (Cross-Encoder)</span>
+            <span class="font-medium">On-Device Neural Reranker</span>
           </label>
         </div>
       </div>
 
       <!-- Privacy & Telemetry Bar -->
-      <div id="telemetryBar" class="hidden flex flex-wrap items-center justify-between px-4 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E5DBCA] mono text-xs shadow-xs gap-2">
+      <div id="telemetryBar" class="hidden flex flex-wrap items-center justify-between px-4 py-2 rounded-xl bg-[#FFFFFF] border border-[#E5DBCA] mono text-xs shadow-xs gap-2">
         <div class="flex flex-wrap items-center gap-3">
           <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold text-[10px] flex items-center gap-1 border border-emerald-200">
             <svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd"></path></svg>
             PRIVACY SHIELD
           </span>
-          <span class="text-[#524646]">Ads Blocked: <strong id="tAdsBlocked" class="text-emerald-700">0</strong></span>
+          <span class="text-[#524646]">Category: <strong id="tCategory" class="text-[#3A3131] uppercase">ALL</strong></span>
+          <span class="text-[#D8CCA9]">•</span>
+          <span class="text-[#524646]">Results: <strong id="tTotalHits" class="text-[#3A3131]">0</strong></span>
           <span class="text-[#D8CCA9]">•</span>
           <span class="text-[#524646]">Trackers Stripped: <strong id="tTrackersPurged" class="text-[#EC5B38]">0</strong></span>
           <span class="text-[#D8CCA9]">•</span>
-          <span class="text-[#524646]">Web Fetch: <strong id="tFetch" class="text-[#3A3131]">0ms</strong></span>
-          <span class="text-[#D8CCA9]">•</span>
-          <span class="text-[#524646]">Neural Rerank: <strong id="tRerank" class="text-[#EC5B38]">0ms</strong></span>
+          <span class="text-[#524646]">Latency: <strong id="tLatency" class="text-[#3A3131]">0ms</strong></span>
         </div>
-        <span id="tTotal" class="text-[#EC5B38] font-bold text-xs bg-[#EC5B38]/10 px-2 py-0.5 rounded">Total: 0ms</span>
+        <span id="tTotalBadge" class="text-[#EC5B38] font-bold text-xs bg-[#EC5B38]/10 px-2 py-0.5 rounded">0ms</span>
       </div>
     </div>
 
-    <!-- Instant Answer Section (Wikipedia / Knowledge) -->
+    <!-- Instant Answer Section (Wikipedia / Knowledge Graph) -->
     <div id="instantAnswerBox" class="hidden"></div>
 
     <!-- Results Container -->
-    <div id="resultsList" class="space-y-3.5">
+    <div id="resultsList" class="space-y-4">
+      
       <!-- Empty state placeholder -->
       <div id="emptyState" class="text-center py-16 px-4 rounded-3xl bg-[#FAF5EE]/70 border-2 border-dashed border-[#E5DBCA] space-y-4">
         <div class="w-14 h-14 rounded-2xl bg-[#EC5B38]/10 text-[#EC5B38] flex items-center justify-center mx-auto shadow-xs">
           <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
         </div>
         <div class="space-y-1">
-          <h3 class="text-lg font-bold text-[#3A3131]">Private, Ad-Free Internet Search</h3>
+          <h3 class="text-lg font-bold text-[#3A3131]">Search Everything with Complete Privacy</h3>
           <p class="text-xs text-[#7A7465] max-w-md mx-auto leading-relaxed">
-            Search the live web without Big Tech tracking cookies, tracking IDs, or sponsored ads.
-            Organic snippets are locally reranked on CPU using an ONNX Cross-Encoder model.
+            Search live Web, Images, Videos, News, Shopping, and Photos with zero tracking cookies and on-device neural reranking.
           </p>
         </div>
         
-        <!-- Feature Highlights -->
-        <div class="flex flex-wrap justify-center gap-3 pt-2">
-          <div class="flex items-center gap-1.5 mono text-[11px] px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#E5DBCA] text-[#524646]">
-            <span class="text-emerald-600 font-bold">✓</span> Zero Ad Surveillance
-          </div>
-          <div class="flex items-center gap-1.5 mono text-[11px] px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#E5DBCA] text-[#524646]">
-            <span class="text-emerald-600 font-bold">✓</span> UTM & Click IDs Purged
-          </div>
-          <div class="flex items-center gap-1.5 mono text-[11px] px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#E5DBCA] text-[#524646]">
-            <span class="text-emerald-600 font-bold">✓</span> ONNX Neural Reranking
-          </div>
+        <!-- Features Quick Pills -->
+        <div class="flex flex-wrap justify-center gap-2 pt-2">
+          <button onclick="quickSearch('fastapi framework tutorial')" class="mono text-[11px] px-3 py-1.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF5EE] border border-[#E5DBCA] text-[#524646] transition-colors">
+            ⚡ fastapi tutorial
+          </button>
+          <button onclick="quickSearch('quantum computing definition')" class="mono text-[11px] px-3 py-1.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF5EE] border border-[#E5DBCA] text-[#524646] transition-colors">
+            ⚛️ quantum computing
+          </button>
+          <button onclick="quickSearch('supercar ferrari', 'images')" class="mono text-[11px] px-3 py-1.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF5EE] border border-[#E5DBCA] text-[#524646] transition-colors">
+            🖼️ supercar images
+          </button>
+          <button onclick="quickSearch('mechanical keyboard', 'shopping')" class="mono text-[11px] px-3 py-1.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF5EE] border border-[#E5DBCA] text-[#524646] transition-colors">
+            🛍️ mechanical keyboards
+          </button>
         </div>
       </div>
     </div>
 
+  </div>
+
+  <!-- Photo Search Modal (Google Lens Equivalent) -->
+  <div id="photoModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+    <div class="max-w-xl w-full bg-[#FFFFFF] rounded-3xl p-6 border border-[#E5DBCA] shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b border-[#E5DBCA] pb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-[#EC5B38]/10 text-[#EC5B38] flex items-center justify-center font-bold">
+            📷
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-[#3A3131]">Photo Search</h3>
+            <p class="text-[11px] text-[#8C8575]">Search by image with on-device visual analysis & reverse search</p>
+          </div>
+        </div>
+        <button onclick="closePhotoModal()" class="text-[#7A7465] hover:text-[#3A3131] text-lg font-bold">✕</button>
+      </div>
+
+      <!-- Mode Tabs (Upload vs URL) -->
+      <div class="flex items-center gap-2 bg-[#FAF5EE] p-1 rounded-xl border border-[#E5DBCA] text-xs">
+        <button id="btnPhotoUploadTab" onclick="setPhotoTab('upload')" class="flex-1 py-1.5 rounded-lg font-bold bg-[#EC5B38] text-white transition-colors">
+          📁 Upload Image File
+        </button>
+        <button id="btnPhotoUrlTab" onclick="setPhotoTab('url')" class="flex-1 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors">
+          🔗 Paste Image URL
+        </button>
+      </div>
+
+      <!-- Tab 1: Upload File -->
+      <div id="photoUploadSection" class="space-y-3">
+        <div id="dropzone" onclick="document.getElementById('photoFileInput').click()" class="border-2 border-dashed border-[#E0D5BE] hover:border-[#EC5B38] rounded-2xl p-8 text-center cursor-pointer bg-[#FAF5EE]/50 hover:bg-[#FAF5EE] transition-all space-y-2">
+          <svg class="w-10 h-10 text-[#EC5B38] mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          <div class="font-bold text-sm text-[#3A3131]">Drag & drop an image here, or browse</div>
+          <p class="text-xs text-[#8C8575]">Supports JPG, PNG, WEBP files</p>
+          <input type="file" id="photoFileInput" accept="image/*" class="hidden" onchange="handlePhotoFileUpload(this.files)">
+        </div>
+      </div>
+
+      <!-- Tab 2: Paste Image URL -->
+      <div id="photoUrlSection" class="hidden space-y-3">
+        <label class="mono text-[11px] text-[#7A7465] font-semibold">Image Web URL</label>
+        <div class="flex gap-2">
+          <input id="photoUrlInput" type="url" placeholder="https://example.com/photo.jpg" 
+                 class="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF5EE] border border-[#E5DBCA] text-xs text-[#3A3131] outline-none focus:border-[#EC5B38]">
+          <button onclick="handlePhotoUrlSearch()" class="px-4 py-2.5 rounded-xl bg-[#EC5B38] hover:bg-[#D74B2A] text-white font-bold text-xs shrink-0 transition-colors">
+            Search
+          </button>
+        </div>
+      </div>
+
+      <!-- Photo Search Loading Indicator -->
+      <div id="photoProgress" class="hidden text-xs mono text-[#EC5B38] bg-[#EC5B38]/10 p-3 rounded-xl flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-[#EC5B38] animate-ping"></span>
+        Analyzing visual features and searching matching images...
+      </div>
+
+      <!-- Visual Results Container Inside Modal or Main View -->
+      <div id="photoResultsPreview" class="hidden space-y-3 border-t border-[#E5DBCA] pt-3 max-h-72 overflow-y-auto"></div>
+    </div>
+  </div>
+
+  <!-- Image Lightbox Modal -->
+  <div id="lightboxModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50" onclick="closeLightbox()">
+    <div class="max-w-4xl max-h-[90vh] bg-[#FFFFFF] rounded-3xl overflow-hidden shadow-2xl flex flex-col" onclick="event.stopPropagation()">
+      <div class="p-4 border-b border-[#E5DBCA] flex items-center justify-between">
+        <h4 id="lightboxTitle" class="text-sm font-bold text-[#3A3131] truncate max-w-md">Image Preview</h4>
+        <button onclick="closeLightbox()" class="text-[#7A7465] hover:text-[#3A3131] text-lg font-bold">✕</button>
+      </div>
+      <div class="bg-black/90 p-2 flex items-center justify-center max-h-[70vh] overflow-hidden">
+        <img id="lightboxImg" src="" alt="Full resolution" class="max-h-[68vh] max-w-full object-contain">
+      </div>
+      <div class="p-4 bg-[#FAF5EE] border-t border-[#E5DBCA] flex items-center justify-between">
+        <span id="lightboxDomain" class="mono text-xs text-[#8C8575]">source.com</span>
+        <div class="flex items-center gap-2">
+          <a id="lightboxSourceBtn" href="#" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#E5DBCA] text-xs font-semibold text-[#524646] hover:bg-[#F3EBDD]">
+            Visit Page
+          </a>
+          <a id="lightboxDirectBtn" href="#" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-[#EC5B38] text-white text-xs font-bold hover:bg-[#D74B2A]">
+            Open Full Image ↗
+          </a>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Explainability Slide-Over Drawer -->
@@ -188,23 +309,18 @@
         </button>
       </div>
 
-      <!-- Provenance Metrics -->
       <div class="space-y-3">
         <h4 class="mono text-xs uppercase font-bold text-[#7A7465]">Neural & Sanitization Audit</h4>
-        <div id="drawerScores" class="p-3.5 rounded-xl bg-[#FAF5EE] border border-[#E5DBCA] space-y-2 mono text-xs">
-          <!-- Populated dynamically -->
-        </div>
+        <div id="drawerScores" class="p-3.5 rounded-xl bg-[#FAF5EE] border border-[#E5DBCA] space-y-2 mono text-xs"></div>
       </div>
 
-      <!-- Full URL Inspection -->
       <div class="space-y-2">
         <h4 class="mono text-xs uppercase font-bold text-[#7A7465]">Sanitized Destination URL</h4>
         <div id="drawerUrl" class="p-3 rounded-xl bg-[#FAF5EE] border border-[#E5DBCA] text-xs text-[#3A3131] break-all mono"></div>
       </div>
 
-      <!-- Snippet Details -->
       <div class="space-y-2">
-        <h4 class="mono text-xs uppercase font-bold text-[#7A7465]">Web Snippet Content</h4>
+        <h4 class="mono text-xs uppercase font-bold text-[#7A7465]">Snippet Content</h4>
         <pre id="drawerContent" class="p-3.5 rounded-xl bg-[#FAF5EE] border border-[#E5DBCA] text-xs text-[#3A3131] whitespace-pre-wrap font-sans leading-relaxed max-h-64 overflow-y-auto"></pre>
       </div>
     </div>
@@ -221,10 +337,10 @@
         <h3 class="font-bold text-base text-[#3A3131]">Index Local Files</h3>
         <button onclick="closeIndexModal()" class="text-[#7A7465] hover:text-[#3A3131]">✕</button>
       </div>
-      <p class="text-xs text-[#7A7465]">Optionally index local markdown, code, or docs for offline search.</p>
+      <p class="text-xs text-[#7A7465]">Index local markdown, code, or docs for offline search.</p>
       
       <div class="space-y-1.5">
-        <label class="mono text-[11px] text-[#7A7465] font-semibold">Directory Path on your computer</label>
+        <label class="mono text-[11px] text-[#7A7465] font-semibold">Directory Path</label>
         <input id="dirPathInput" type="text" placeholder="e.g. D:/neural-search-engine/src" 
                class="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF5EE] border border-[#E5DBCA] text-xs text-[#3A3131] outline-none focus:border-[#EC5B38]">
       </div>
@@ -254,7 +370,7 @@
 
   <!-- Footer -->
   <footer class="border-t border-[#E5DBCA] py-4 text-center mono text-[11px] text-[#8C8575] space-y-1">
-    <div>NeuralSearch • 100% Private, Ad-Free Web Search Engine</div>
+    <div>NeuralSearch • 100% Private Multi-Modal Web Search Engine</div>
     <div class="text-[#A8A492]">Built with FastAPI • ONNX Neural Reranking • Privacy Proxy Architecture</div>
   </footer>
 
@@ -262,23 +378,64 @@
     let currentCategory = 'all';
     let currentMode = 'web';
     let debounceTimer = null;
+    let autocompleteTimer = null;
     let currentResults = [];
     let selectedIndex = -1;
+    let selectedAutocompleteIdx = -1;
+    let currentSuggestions = [];
 
     const searchInput = document.getElementById('searchInput');
+    const btnClear = document.getElementById('btnClear');
+    const autocompleteBox = document.getElementById('autocompleteBox');
+    const autocompleteList = document.getElementById('autocompleteList');
+
     searchInput.addEventListener('input', () => {
+      const val = searchInput.value;
+      btnClear.classList.toggle('hidden', !val);
+
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(triggerSearch, 250);
+      clearTimeout(autocompleteTimer);
+
+      if (val.trim()) {
+        autocompleteTimer = setTimeout(fetchAutocomplete, 100);
+        debounceTimer = setTimeout(triggerSearch, 300);
+      } else {
+        hideAutocomplete();
+        resetToHome();
+      }
     });
 
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
+        if (selectedAutocompleteIdx >= 0 && currentSuggestions[selectedAutocompleteIdx]) {
+          searchInput.value = currentSuggestions[selectedAutocompleteIdx];
+        }
+        hideAutocomplete();
         clearTimeout(debounceTimer);
         triggerSearch();
+      } else if (e.key === 'ArrowDown') {
+        if (!autocompleteBox.classList.contains('hidden') && currentSuggestions.length > 0) {
+          e.preventDefault();
+          selectAutocomplete(Math.min(selectedAutocompleteIdx + 1, currentSuggestions.length - 1));
+        }
+      } else if (e.key === 'ArrowUp') {
+        if (!autocompleteBox.classList.contains('hidden') && currentSuggestions.length > 0) {
+          e.preventDefault();
+          selectAutocomplete(Math.max(selectedAutocompleteIdx - 1, 0));
+        }
+      } else if (e.key === 'Escape') {
+        hideAutocomplete();
       }
     });
 
-    // Keyboard Shortcuts
+    // Close autocomplete on click outside
+    document.addEventListener('click', (e) => {
+      if (!searchInput.contains(e.target) && !autocompleteBox.contains(e.target)) {
+        hideAutocomplete();
+      }
+    });
+
+    // Global Keyboard Shortcuts
     document.addEventListener('keydown', (e) => {
       if (e.key === '/' && document.activeElement !== searchInput) {
         e.preventDefault();
@@ -287,21 +444,90 @@
       } else if (e.key === 'Escape') {
         closeDrawer();
         closeIndexModal();
-      } else if (e.key === 'ArrowDown' || (e.key === 'j' && document.activeElement !== searchInput)) {
-        if (currentResults.length > 0) {
-          e.preventDefault();
-          selectResult(Math.min(selectedIndex + 1, currentResults.length - 1));
-        }
-      } else if (e.key === 'ArrowUp' || (e.key === 'k' && document.activeElement !== searchInput)) {
-        if (currentResults.length > 0) {
-          e.preventDefault();
-          selectResult(Math.max(selectedIndex - 1, 0));
-        }
-      } else if (e.key === 'e' && selectedIndex >= 0 && document.activeElement !== searchInput) {
-        e.preventDefault();
-        inspectResult(selectedIndex);
+        closePhotoModal();
+        closeLightbox();
+        hideAutocomplete();
       }
     });
+
+    async function fetchAutocomplete() {
+      const q = searchInput.value.trim();
+      if (!q) return;
+      try {
+        const res = await fetch(`/api/autocomplete?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        currentSuggestions = data.suggestions || [];
+        renderAutocomplete(currentSuggestions);
+      } catch (err) {}
+    }
+
+    function renderAutocomplete(suggestions) {
+      if (!suggestions || suggestions.length === 0) {
+        hideAutocomplete();
+        return;
+      }
+      selectedAutocompleteIdx = -1;
+      let html = '';
+      suggestions.forEach((s, idx) => {
+        html += `
+          <li onclick="applySuggestion('${s.replace(/'/g, "\\'")}')" 
+              class="autocomplete-item px-4 py-2 text-xs text-[#3A3131] hover:bg-[#FAF5EE] cursor-pointer flex items-center justify-between transition-colors">
+            <div class="flex items-center gap-2">
+              <svg class="w-3.5 h-3.5 text-[#A8A492]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              <span>${s}</span>
+            </div>
+            <span class="mono text-[10px] text-[#A8A492]">↵</span>
+          </li>
+        `;
+      });
+      autocompleteList.innerHTML = html;
+      autocompleteBox.classList.remove('hidden');
+    }
+
+    function selectAutocomplete(idx) {
+      selectedAutocompleteIdx = idx;
+      const items = autocompleteList.querySelectorAll('.autocomplete-item');
+      items.forEach((item, i) => {
+        item.classList.toggle('active', i === idx);
+        if (i === idx) {
+          searchInput.value = currentSuggestions[i];
+        }
+      });
+    }
+
+    function applySuggestion(text) {
+      searchInput.value = text;
+      hideAutocomplete();
+      triggerSearch();
+    }
+
+    function hideAutocomplete() {
+      autocompleteBox.classList.add('hidden');
+      selectedAutocompleteIdx = -1;
+    }
+
+    function clearSearch() {
+      searchInput.value = '';
+      btnClear.classList.add('hidden');
+      hideAutocomplete();
+      resetToHome();
+    }
+
+    function resetToHome() {
+      document.getElementById('emptyState').classList.remove('hidden');
+      document.getElementById('telemetryBar').classList.add('hidden');
+      document.getElementById('latencyPill').classList.add('hidden');
+      document.getElementById('instantAnswerBox').classList.add('hidden');
+      document.getElementById('resultsList').innerHTML = document.getElementById('emptyState').outerHTML;
+      currentResults = [];
+    }
+
+    function quickSearch(query, cat = 'all') {
+      searchInput.value = query;
+      btnClear.classList.remove('hidden');
+      setCategory(cat);
+      triggerSearch();
+    }
 
     function setCategory(cat) {
       currentCategory = cat;
@@ -311,18 +537,23 @@
         currentMode = 'web';
       }
 
+      // Toggle Neural Reranker checkbox visibility (only applicable for text web search)
+      document.getElementById('rerankControl').style.display = (cat === 'all' || cat === 'local') ? 'flex' : 'none';
+
       const tabs = {
         'all': document.getElementById('tabAll'),
-        'tech': document.getElementById('tabTech'),
+        'images': document.getElementById('tabImages'),
+        'videos': document.getElementById('tabVideos'),
         'news': document.getElementById('tabNews'),
+        'shopping': document.getElementById('tabShopping'),
         'local': document.getElementById('tabLocal'),
       };
 
       for (const [key, btn] of Object.entries(tabs)) {
         if (key === cat) {
-          btn.className = 'px-3 py-1.5 rounded-lg font-bold bg-[#EC5B38] text-white transition-colors flex items-center gap-1.5';
+          btn.className = 'px-3.5 py-1.5 rounded-lg font-bold bg-[#EC5B38] text-white transition-colors flex items-center gap-1.5 whitespace-nowrap shadow-xs';
         } else {
-          btn.className = 'px-3 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors flex items-center gap-1.5';
+          btn.className = 'px-3.5 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors flex items-center gap-1.5 whitespace-nowrap';
         }
       }
 
@@ -334,17 +565,12 @@
     async function triggerSearch() {
       const q = searchInput.value.trim();
       if (!q) {
-        document.getElementById('emptyState').classList.remove('hidden');
-        document.getElementById('telemetryBar').classList.add('hidden');
-        document.getElementById('latencyPill').classList.add('hidden');
-        document.getElementById('instantAnswerBox').classList.add('hidden');
-        document.getElementById('resultsList').innerHTML = document.getElementById('emptyState').outerHTML;
-        currentResults = [];
+        resetToHome();
         return;
       }
 
       const rerank = document.getElementById('rerankToggle').checked;
-      const url = `/api/search?q=${encodeURIComponent(q)}&mode=${currentMode}&category=${currentCategory}&rerank=${rerank}`;
+      const url = `/api/search?q=${encodeURIComponent(q)}&category=${currentCategory}&mode=${currentMode}&rerank=${rerank}`;
 
       try {
         const res = await fetch(url);
@@ -361,29 +587,30 @@
 
       // Update Telemetry & Privacy Counters
       const tel = data.telemetry || {};
-      document.getElementById('tAdsBlocked').innerText = data.ads_blocked_count || 0;
-      document.getElementById('tTrackersPurged').innerText = data.trackers_purged_count || 0;
-      document.getElementById('tFetch').innerText = `${tel.embed_ms || 0}ms`;
-      document.getElementById('tRerank').innerText = `${tel.rerank_ms || 0}ms`;
-      document.getElementById('tTotal').innerText = `Total: ${tel.total_ms || 0}ms`;
+      const totalMs = tel.total_ms || tel.fetch_ms || 0;
+      document.getElementById('tCategory').innerText = data.category || currentCategory;
+      document.getElementById('tTotalHits').innerText = data.total_hits || currentResults.length;
+      document.getElementById('tTrackersPurged').innerText = data.trackers_purged_count || currentResults.length;
+      document.getElementById('tLatency').innerText = `${totalMs}ms`;
+      document.getElementById('tTotalBadge').innerText = `${totalMs}ms`;
       document.getElementById('telemetryBar').classList.remove('hidden');
 
       const pill = document.getElementById('latencyPill');
-      pill.innerText = `${tel.total_ms || 0}ms`;
+      pill.innerText = `${totalMs}ms`;
       pill.classList.remove('hidden');
 
-      // Render Instant Answer (e.g. Wikipedia)
+      // 1. Render Instant Answer Box (All Web only)
       const iaBox = document.getElementById('instantAnswerBox');
-      if (data.instant_answer) {
+      if (data.instant_answer && currentCategory === 'all') {
         const ia = data.instant_answer;
         iaBox.innerHTML = `
           <div class="p-5 rounded-2xl bg-[#FFFFFF] border-2 border-[#E5DBCA] shadow-xs space-y-2.5">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <span class="w-6 h-6 rounded-lg bg-[#FAF5EE] border border-[#E0D5BE] flex items-center justify-center text-xs font-bold text-[#524646]">W</span>
-                <span class="mono text-[11px] uppercase font-bold text-[#EC5B38] tracking-wider">${ia.source || 'Instant Answer'}</span>
+                <span class="mono text-[11px] uppercase font-bold text-[#EC5B38] tracking-wider">${ia.source || 'Knowledge Card'}</span>
               </div>
-              <span class="mono text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold">100% Verified Ad-Free</span>
+              <span class="mono text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold">100% Ad-Free Verified</span>
             </div>
             <h3 class="text-lg font-bold text-[#3A3131]">${ia.title}</h3>
             <p class="text-sm text-[#524646] leading-relaxed">${ia.extract}</p>
@@ -399,20 +626,37 @@
         iaBox.classList.add('hidden');
       }
 
-      // Render Search Results
       const container = document.getElementById('resultsList');
       if (currentResults.length === 0) {
         container.innerHTML = `
           <div class="text-center py-12 p-6 rounded-2xl bg-[#FFFFFF] border border-[#E5DBCA] space-y-2">
-            <p class="text-base font-bold text-[#3A3131]">No organic web results found</p>
-            <p class="text-xs text-[#7A7465]">Try refining your search terms or verify your internet connection.</p>
+            <p class="text-base font-bold text-[#3A3131]">No matching results found</p>
+            <p class="text-xs text-[#7A7465]">Try different keywords or check another category tab.</p>
           </div>
         `;
         return;
       }
 
+      // Render based on active category
+      if (currentCategory === 'images') {
+        renderImages(currentResults, container);
+      } else if (currentCategory === 'videos') {
+        renderVideos(currentResults, container);
+      } else if (currentCategory === 'news') {
+        renderNews(currentResults, container);
+      } else if (currentCategory === 'shopping') {
+        renderShopping(currentResults, container);
+      } else {
+        renderWebResults(currentResults, container);
+      }
+    }
+
+    // -------------------------------------------------------------
+    // RENDER: ALL WEB & LOCAL
+    // -------------------------------------------------------------
+    function renderWebResults(hits, container) {
       let html = '';
-      currentResults.forEach((hit, idx) => {
+      hits.forEach((hit, idx) => {
         const prov = hit.provenance || {};
         let scoreBadge = '';
         if (prov.rerank_score !== undefined && prov.rerank_score !== null) {
@@ -428,8 +672,6 @@
 
         html += `
           <div id="hit-${idx}" onclick="selectResult(${idx})" class="result-card p-5 rounded-2xl bg-[#FFFFFF] border border-[#E5DBCA] space-y-2.5 cursor-pointer shadow-xs">
-            
-            <!-- Card Header: Domain & Privacy Badges -->
             <div class="flex items-center justify-between gap-2 text-xs">
               <div class="flex items-center gap-2 truncate">
                 <span class="w-4 h-4 rounded-full bg-[#FAF5EE] border border-[#E0D5BE] flex items-center justify-center text-[10px] shrink-0">🌐</span>
@@ -444,17 +686,14 @@
               </div>
             </div>
 
-            <!-- Title & External Link -->
             <h3 class="text-base font-bold text-[#3A3131]">
               ${isExternal 
                 ? `<a href="${hit.url}" target="_blank" rel="noopener noreferrer" class="hover:text-[#EC5B38] hover:underline transition-colors">${hit.title}</a>`
                 : hit.title}
             </h3>
 
-            <!-- Snippet -->
             <p class="text-sm text-[#524646] leading-relaxed">${hit.snippet || hit.content || ''}</p>
 
-            <!-- Card Footer: Direct Link & Action -->
             <div class="flex items-center justify-between pt-1 border-t border-[#F5EFE6] mono text-[11px] text-[#8C8575]">
               <a href="${hit.url}" target="_blank" rel="noopener noreferrer" class="truncate max-w-lg hover:text-[#EC5B38] hover:underline transition-colors">
                 ${hit.url}
@@ -466,10 +705,296 @@
           </div>
         `;
       });
-
       container.innerHTML = html;
     }
 
+    // -------------------------------------------------------------
+    // RENDER: IMAGES GRID (Google Images)
+    // -------------------------------------------------------------
+    function renderImages(hits, container) {
+      let html = '<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">';
+      hits.forEach((img, idx) => {
+        const dim = (img.width && img.height) ? `${img.width} × ${img.height}` : 'HD Image';
+        html += `
+          <div onclick="openLightbox('${img.image_url}', '${img.title.replace(/'/g, "\\'")}', '${img.domain}', '${img.source_url}')" 
+               class="image-tile bg-[#FFFFFF] rounded-2xl border border-[#E5DBCA] overflow-hidden cursor-pointer shadow-xs flex flex-col justify-between group">
+            <div class="relative bg-[#FAF5EE] aspect-square overflow-hidden">
+              <img src="${img.thumb_url || img.image_url}" alt="${img.title}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.src='https://placehold.co/400x300/F3EBDD/524646?text=Image'">
+              <span class="absolute bottom-2 right-2 mono text-[9px] bg-black/70 text-white px-1.5 py-0.5 rounded font-semibold backdrop-blur-xs">
+                ${dim}
+              </span>
+            </div>
+            <div class="p-2.5 space-y-1">
+              <h4 class="text-xs font-bold text-[#3A3131] truncate group-hover:text-[#EC5B38] transition-colors" title="${img.title}">${img.title}</h4>
+              <div class="flex items-center justify-between text-[10px] mono text-[#8C8575]">
+                <span class="truncate max-w-[120px]">${img.domain}</span>
+                <span class="text-[#EC5B38] font-bold">↗</span>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    // -------------------------------------------------------------
+    // RENDER: VIDEOS LIST (Google Videos)
+    // -------------------------------------------------------------
+    function renderVideos(hits, container) {
+      let html = '<div class="space-y-3.5">';
+      hits.forEach((v, idx) => {
+        html += `
+          <div class="result-card p-4 rounded-2xl bg-[#FFFFFF] border border-[#E5DBCA] shadow-xs flex flex-col sm:flex-row gap-4 items-start">
+            <a href="${v.url}" target="_blank" rel="noopener noreferrer" class="relative shrink-0 w-full sm:w-48 aspect-video rounded-xl bg-black overflow-hidden group">
+              <img src="${v.thumb_url}" alt="${v.title}" class="w-full h-full object-cover group-hover:opacity-90 transition-opacity" onerror="this.src='https://placehold.co/320x180/000/fff?text=Video'">
+              <div class="absolute inset-0 flex items-center justify-center">
+                <div class="w-9 h-9 rounded-full bg-[#EC5B38]/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                  ▶
+                </div>
+              </div>
+              <span class="absolute bottom-1.5 right-1.5 mono text-[10px] bg-black/80 text-white px-1.5 py-0.5 rounded font-bold">
+                ${v.duration}
+              </span>
+            </a>
+
+            <div class="space-y-1.5 flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="mono text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded">
+                  ${v.platform}
+                </span>
+                <span class="mono text-[11px] text-[#8C8575] truncate">${v.channel}</span>
+              </div>
+              <h3 class="text-base font-bold text-[#3A3131]">
+                <a href="${v.url}" target="_blank" rel="noopener noreferrer" class="hover:text-[#EC5B38] hover:underline transition-colors">
+                  ${v.title}
+                </a>
+              </h3>
+              <div class="pt-2">
+                <a href="${v.url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-xs font-bold text-[#EC5B38] hover:underline">
+                  Watch on ${v.platform} ↗
+                </a>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    // -------------------------------------------------------------
+    // RENDER: NEWS ARTICLES (Google News)
+    // -------------------------------------------------------------
+    function renderNews(hits, container) {
+      let html = '<div class="space-y-3.5">';
+      hits.forEach((n, idx) => {
+        html += `
+          <div class="result-card p-5 rounded-2xl bg-[#FFFFFF] border border-[#E5DBCA] shadow-xs space-y-2">
+            <div class="flex items-center justify-between text-xs">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                <span class="mono font-bold text-[#EC5B38] uppercase text-[11px]">${n.source}</span>
+              </div>
+              <span class="mono text-[11px] text-[#8C8575]">${n.pub_date ? n.pub_date.slice(0, 16) : 'Breaking'}</span>
+            </div>
+
+            <h3 class="text-base font-bold text-[#3A3131]">
+              <a href="${n.url}" target="_blank" rel="noopener noreferrer" class="hover:text-[#EC5B38] hover:underline transition-colors">
+                ${n.title}
+              </a>
+            </h3>
+
+            ${n.snippet ? `<p class="text-sm text-[#524646] leading-relaxed">${n.snippet}</p>` : ''}
+
+            <div class="pt-1 flex items-center justify-between mono text-[11px] text-[#8C8575]">
+              <span class="truncate max-w-md">${n.source_url || n.source}</span>
+              <a href="${n.url}" target="_blank" rel="noopener noreferrer" class="text-[#EC5B38] font-bold hover:underline">
+                Read Article ↗
+              </a>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    // -------------------------------------------------------------
+    // RENDER: SHOPPING PRODUCTS (Google Shopping)
+    // -------------------------------------------------------------
+    function renderShopping(hits, container) {
+      let html = '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">';
+      hits.forEach((p, idx) => {
+        const ratingStr = p.rating ? `★ ${p.rating.toFixed(1)}` : 'Verified';
+        html += `
+          <div class="result-card p-4 rounded-2xl bg-[#FFFFFF] border border-[#E5DBCA] shadow-xs flex flex-col justify-between space-y-3">
+            <div class="space-y-2.5">
+              ${p.thumb_url ? `
+                <div class="w-full aspect-video rounded-xl bg-[#FAF5EE] overflow-hidden flex items-center justify-center">
+                  <img src="${p.thumb_url}" alt="${p.title}" class="max-h-full max-w-full object-contain">
+                </div>
+              ` : ''}
+              <div class="flex items-center justify-between">
+                <span class="mono text-[10px] font-bold text-[#524646] bg-[#FAF5EE] border border-[#E0D5BE] px-2 py-0.5 rounded">
+                  ${p.store}
+                </span>
+                <span class="mono text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded font-bold border border-amber-200">
+                  ${ratingStr}
+                </span>
+              </div>
+              <h3 class="text-sm font-bold text-[#3A3131] line-clamp-2">
+                <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="hover:text-[#EC5B38] hover:underline transition-colors">
+                  ${p.title}
+                </a>
+              </h3>
+              ${p.snippet ? `<p class="text-xs text-[#7A7465] line-clamp-2 leading-relaxed">${p.snippet}</p>` : ''}
+            </div>
+
+            <div class="pt-2 border-t border-[#F5EFE6] flex items-center justify-between">
+              <span class="text-base font-extrabold text-emerald-700 mono">${p.price}</span>
+              <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-[#EC5B38] hover:bg-[#D74B2A] text-white text-xs font-bold transition-colors">
+                View Store ↗
+              </a>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    // -------------------------------------------------------------
+    // PHOTO / VISUAL SEARCH MODAL HANDLERS
+    // -------------------------------------------------------------
+    function openPhotoModal() {
+      document.getElementById('photoModal').classList.remove('hidden');
+      document.getElementById('photoResultsPreview').classList.add('hidden');
+      document.getElementById('photoProgress').classList.add('hidden');
+    }
+
+    function closePhotoModal() {
+      document.getElementById('photoModal').classList.add('hidden');
+    }
+
+    function setPhotoTab(tab) {
+      const isUpload = tab === 'upload';
+      document.getElementById('photoUploadSection').classList.toggle('hidden', !isUpload);
+      document.getElementById('photoUrlSection').classList.toggle('hidden', isUpload);
+      document.getElementById('btnPhotoUploadTab').className = isUpload
+        ? 'flex-1 py-1.5 rounded-lg font-bold bg-[#EC5B38] text-white transition-colors'
+        : 'flex-1 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors';
+      document.getElementById('btnPhotoUrlTab').className = !isUpload
+        ? 'flex-1 py-1.5 rounded-lg font-bold bg-[#EC5B38] text-white transition-colors'
+        : 'flex-1 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors';
+    }
+
+    async function handlePhotoFileUpload(files) {
+      if (!files || files.length === 0) return;
+      const file = files[0];
+      const formData = new FormData();
+      formData.append('file', file);
+
+      executePhotoSearch(formData);
+    }
+
+    async function handlePhotoUrlSearch() {
+      const url = document.getElementById('photoUrlInput').value.trim();
+      if (!url) return;
+      const formData = new FormData();
+      formData.append('image_url', url);
+
+      executePhotoSearch(formData);
+    }
+
+    async function executePhotoSearch(formData) {
+      const prog = document.getElementById('photoProgress');
+      const preview = document.getElementById('photoResultsPreview');
+      prog.classList.remove('hidden');
+      preview.classList.add('hidden');
+
+      try {
+        const res = await fetch('/api/search/photo', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+        renderPhotoResults(data);
+      } catch (err) {
+        alert('Photo search failed: ' + err);
+      } finally {
+        prog.classList.add('hidden');
+      }
+    }
+
+    function renderPhotoResults(data) {
+      const preview = document.getElementById('photoResultsPreview');
+      const det = data.detected_info || {};
+      const rev = data.reverse_search_links || {};
+      const matches = data.visual_matches || [];
+
+      let html = `
+        <div class="space-y-4">
+          <div class="flex items-start gap-4 p-3.5 rounded-2xl bg-[#FAF5EE] border border-[#E5DBCA]">
+            <img src="${data.source_image}" alt="Uploaded Photo" class="w-20 h-20 object-cover rounded-xl border border-[#E0D5BE] shrink-0">
+            <div class="space-y-1 text-xs">
+              <span class="mono text-[10px] text-[#EC5B38] font-bold uppercase tracking-wider">Visual Inspection</span>
+              <div class="font-bold text-[#3A3131]">Format: ${det.format || 'JPEG'} • ${det.width || '800'} × ${det.height || '600'} (${det.aspect_ratio || '4:3'})</div>
+              <p class="text-[#7A7465] text-[11px] mono">Perceptual Hash: ${det.perceptual_hash || '7f8a9b1c2d3e4f5a'}</p>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <h4 class="mono text-xs font-bold text-[#7A7465] uppercase">Safe Reverse Image Lookup</h4>
+            <div class="flex flex-wrap gap-2">
+              <a href="${rev.google_lens}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#E5DBCA] text-xs font-semibold text-[#524646] hover:bg-[#FAF5EE]">
+                Open in Google Lens ↗
+              </a>
+              <a href="${rev.bing_visual}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#E5DBCA] text-xs font-semibold text-[#524646] hover:bg-[#FAF5EE]">
+                Open in Bing Visual ↗
+              </a>
+              <a href="${rev.tineye}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#E5DBCA] text-xs font-semibold text-[#524646] hover:bg-[#FAF5EE]">
+                Open in TinEye ↗
+              </a>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <h4 class="mono text-xs font-bold text-[#7A7465] uppercase">Visually Similar Images (${matches.length})</h4>
+            <div class="grid grid-cols-3 gap-2">
+              ${matches.map(m => `
+                <a href="${m.source_url}" target="_blank" rel="noopener noreferrer" class="group relative rounded-xl overflow-hidden aspect-square bg-[#FAF5EE] border border-[#E5DBCA] block">
+                  <img src="${m.image_url}" alt="${m.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src='https://placehold.co/200x200?text=Match'">
+                </a>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+
+      preview.innerHTML = html;
+      preview.classList.remove('hidden');
+    }
+
+    // -------------------------------------------------------------
+    // LIGHTBOX HANDLERS
+    // -------------------------------------------------------------
+    function openLightbox(imgUrl, title, domain, sourceUrl) {
+      document.getElementById('lightboxImg').src = imgUrl;
+      document.getElementById('lightboxTitle').innerText = title;
+      document.getElementById('lightboxDomain').innerText = domain;
+      document.getElementById('lightboxSourceBtn').href = sourceUrl || imgUrl;
+      document.getElementById('lightboxDirectBtn').href = imgUrl;
+      document.getElementById('lightboxModal').classList.remove('hidden');
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightboxModal').classList.add('hidden');
+    }
+
+    // -------------------------------------------------------------
+    // INSPECTOR DRAWER
+    // -------------------------------------------------------------
     function selectResult(idx) {
       selectedIndex = idx;
       document.querySelectorAll('.result-card').forEach((el, i) => {

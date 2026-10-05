@@ -1,4 +1,4 @@
-# UI/UX Design System: Private, Ad-Free Neural Web Search Engine
+# UI/UX Design System: Private, Multi-Modal Neural Web Search Engine
 
 **Project**: NeuralSearch  
 **Path**: `D:\neural-search-engine\DESIGN.md`  
@@ -11,7 +11,8 @@
 The interface follows the principles of **privacy, clarity, and zero commercial noise**:
 1. **Ad-Free Serenity**: Zero banner ads, zero sponsored promotions, zero flashing widgets. Just pure, organic internet knowledge.
 2. **Warm Alabaster Canvas (`#FCF2E5`)**: Avoids harsh blinding pure white or clinical grays, creating a calm reading environment.
-3. **Transparent Privacy Indicators**: Highlights to the user that their query was anonymized and displays how many trackers were stripped.
+3. **Multi-Modal Ergonomics**: Comprehensive coverage of all primary Google search verticals (All, Images, Videos, News, Shopping, Local Files) and Visual Photo Search.
+4. **Transparent Privacy Indicators**: Highlights to the user that their query was anonymized and displays live metrics on trackers purged and ads blocked.
 
 ---
 
@@ -43,29 +44,33 @@ The interface follows the principles of **privacy, clarity, and zero commercial 
 
 ---
 
-## 3. Web Search Component Specifications
+## 3. Component Specifications
 
-### 3.1 Hero Search Bar & Category Tabs
-- Category navigation:
-  - **All Web**: General search across the entire internet.
-  - **Tech & Code**: Prioritizes GitHub, StackOverflow, MDN, documentation, and papers.
-  - **News & Articles**: Focuses on current publications and editorial pieces.
-- Prominent search input with auto-focus, real-time debouncing, and search keyboard shortcut (`/`).
+### 3.1 Hero Search Bar with Google Lens Camera & Autocomplete
+* **Search Input Bar**: Prominent rounded bar with auto-focus, real-time debouncing, and keyboard shortcut (`/`).
+* **Photo Search Button (📷)**: Direct trigger for visual reverse image search.
+* **Live Autocomplete Dropdown**: Instant query suggestions (<50ms) as the user types with keyboard arrow navigation.
 
-### 3.2 Privacy & Security Shield Bar
-- Displays privacy audit status for the active query:
-  - `🛡️ Private Session (No cookies, no IP logging)`
-  - `🚫 4 Sponsored Ads Blocked`
-  - `⚡ 12 Tracking Parameters Stripped`
+### 3.2 Category Navigation Tabs
+* **🌐 All Web**: General search across the entire internet with Cross-Encoder neural reranking and Wikipedia instant answers.
+* **🖼️ Images**: High-resolution masonry image grid with dimensions tags, hover zoom, and lightbox preview.
+* **🎬 Videos**: Rich video list with platform badge (YouTube, Web), duration indicator, and video thumbnails.
+* **📰 News**: Breaking news cards with source publication, timestamps ("2 hours ago"), and article snippets.
+* **🛍️ Shopping**: E-commerce product cards with price tags (`$XX.XX`), store badges (Amazon, Best Buy, Walmart, eBay), and direct links.
+* **📁 Local Docs**: Offline search across local code and documentation files.
 
-### 3.3 Web Result Card
-- **Domain Row**: Site favicon + clean domain breadcrumb (`en.wikipedia.org > wiki > Machine_learning`).
-- **Title**: Clean clickable link pointing directly to the external website (no tracking redirection hops).
-- **Snippet**: Extracted web summary with `<mark class="highlight">` spans for matched search terms.
-- **Badges**:
-  - `Organic Web Result`
-  - `Direct Link (No tracking hop)`
-  - `Inspect Rerank Score` button to open explainability breakdown.
+### 3.3 Photo Search (Google Lens Equivalent) Modal
+* Drag-and-drop file upload zone for `.jpg`, `.png`, `.webp`.
+* Image URL input for searching public web images.
+* On-device computer vision inspection panel (dimensions, aspect ratio, perceptual hash).
+* Visually similar image matching grid + direct 1-click external privacy reverse search links (Google Lens, Bing Visual, TinEye).
 
-### 3.4 Direct Answer & Wikipedia Instant Box
-- For fact-based queries (e.g. `"what is quantum computing"` or `"define neural network"`), an elevated knowledge summary card appears at the top of the search results with a direct link to the canonical source.
+### 3.4 Full-Resolution Image Lightbox
+* Responsive dark overlay lightbox for inspecting full-resolution image assets with direct links to source domains.
+
+### 3.5 Privacy Shield & Telemetry Bar
+* Real-time privacy metrics:
+  - `🛡️ PRIVACY SHIELD: Active`
+  - `X Trackers Stripped`
+  - `Y Ads Blocked`
+  - `Zero Cookies / IP Logging`
