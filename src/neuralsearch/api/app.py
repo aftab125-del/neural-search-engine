@@ -134,6 +134,8 @@ async def search_endpoint(
     mode: str = Query("web", description="Retrieval mode: web | local | hybrid"),
     top_k: int = Query(15, ge=1, le=60, description="Max results to return"),
     rerank: bool = Query(True, description="Enable cross-encoder neural reranker"),
+    time_range: Optional[str] = Query(None, description="Time filter: day | week | month | year"),
+    safesearch: str = Query("moderate", description="SafeSearch level: strict | moderate | off"),
 ):
     """
     Unified multi-modal search endpoint supporting All Web, Images, Videos, News, Shopping, and Local Docs.
@@ -306,7 +308,14 @@ async def search_endpoint(
         }
 
     # 6. ALL WEB SEARCH (Default with Neural Cross-Encoder Reranker)
-    web_resp = await engine.search_web(query=clean_q, category=category, top_k=top_k, rerank=rerank)
+    web_resp = await engine.search_web(
+        query=clean_q,
+        category=category,
+        top_k=top_k,
+        rerank=rerank,
+        time_range=time_range,
+        safesearch=safesearch,
+    )
     query_terms = engine.inverted_index.tokenizer.tokenize_terms(clean_q)
 
     formatted_hits = []
@@ -337,12 +346,15 @@ async def search_endpoint(
             "extract": web_resp.instant_answer.extract,
             "url": web_resp.instant_answer.url,
             "source": web_resp.instant_answer.source,
+            "answer_type": getattr(web_resp.instant_answer, "answer_type", "knowledge"),
         }
 
     return {
         "query": web_resp.query,
         "category": "all",
         "mode": "web",
+        "time_range": time_range,
+        "safesearch": safesearch,
         "total_hits": len(formatted_hits),
         "hits": formatted_hits,
         "instant_answer": instant_answer_dict,

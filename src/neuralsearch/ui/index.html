@@ -6,172 +6,284 @@
   <title>NeuralSearch • Private Multi-Modal Web Search</title>
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
-    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #FCF2E5; color: #524646; }
-    .mono { font-family: 'JetBrains Mono', monospace; }
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    
+    :root {
+      --color-merino: #F5EEDD;
+      --color-rock-blue: #84B3CE;
+      --color-venice-blue: #16587B;
+      --color-deep-abyss: #0D384F;
+      --color-slate-mist: #527488;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #F5EEDD;
+      color: #0D384F;
+    }
+
+    .font-display {
+      font-family: 'Fraunces', Georgia, serif;
+    }
+
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
     
     mark.highlight {
-      background-color: rgba(236, 91, 56, 0.15);
-      color: #D14421;
-      font-weight: 600;
-      padding: 1px 4px;
+      background-color: rgba(132, 179, 206, 0.28);
+      color: #16587B;
+      font-weight: 700;
+      padding: 1px 5px;
       border-radius: 4px;
     }
 
     .result-card {
-      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      border-color: #E2D9C5;
+      background-color: #FFFFFF;
     }
     .result-card:hover {
       transform: translateY(-2px);
-      box-shadow: 0 10px 28px -6px rgba(82, 70, 70, 0.09);
-      border-color: rgba(236, 91, 56, 0.45);
+      box-shadow: 0 12px 28px -6px rgba(22, 88, 123, 0.10);
+      border-color: #84B3CE;
     }
     .result-card.selected {
-      border-color: #EC5B38;
-      box-shadow: 0 0 0 2px rgba(236, 91, 56, 0.2);
+      border-color: #16587B;
+      box-shadow: 0 0 0 2px rgba(132, 179, 206, 0.45);
     }
 
     .image-tile {
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      border-color: #E2D9C5;
+      background-color: #FFFFFF;
     }
     .image-tile:hover {
       transform: translateY(-3px);
-      box-shadow: 0 12px 24px -6px rgba(82, 70, 70, 0.15);
+      box-shadow: 0 14px 28px -6px rgba(22, 88, 123, 0.14);
+      border-color: #84B3CE;
+    }
+
+    .search-input-shell {
+      transition: all 0.2s ease;
+      background-color: #FFFFFF;
+      border-color: #DCD0B6;
+    }
+    .search-input-shell:focus-within {
+      border-color: #16587B;
+      box-shadow: 0 0 0 4px rgba(132, 179, 206, 0.30);
     }
 
     .autocomplete-item.active {
-      background-color: #FAF5EE;
-      color: #EC5B38;
+      background-color: rgba(132, 179, 206, 0.22);
+      color: #16587B;
+      font-weight: 700;
+      border-left: 3px solid #16587B;
+      padding-left: calc(1rem - 3px);
+    }
+
+    /* Wave 3: Shimmer Skeletons for Zero CLS */
+    @keyframes shimmer {
+      0% {
+        background-position: -200% 0;
+      }
+      100% {
+        background-position: 200% 0;
+      }
+    }
+
+    .skeleton {
+      background: linear-gradient(90deg, #F0E8D4 25%, #E2D7BE 50%, #F0E8D4 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 8px;
     }
   </style>
 </head>
-<body class="bg-[#FCF2E5] text-[#524646] min-h-screen antialiased flex flex-col justify-between">
+<body class="bg-[#F5EEDD] text-[#0D384F] min-h-screen antialiased flex flex-col justify-between">
   
   <!-- Main Container -->
   <div class="max-w-5xl mx-auto w-full p-4 sm:p-6 lg:p-8 space-y-5">
 
     <!-- Top Navigation Header -->
-    <header class="flex flex-wrap items-center justify-between border-b border-[#E5DBCA] pb-4 gap-3">
-      <div class="flex items-center gap-3 cursor-pointer" onclick="resetToHome()">
-        <div class="w-10 h-10 rounded-2xl bg-[#EC5B38] flex items-center justify-center font-extrabold text-white text-lg shadow-md shadow-[#EC5B38]/20">
+    <header class="flex flex-wrap items-center justify-between border-b border-[#E2D9C5] pb-4 gap-3">
+      <div class="flex items-center gap-3 cursor-pointer select-none" onclick="resetToHome()">
+        <div class="w-10 h-10 rounded-2xl bg-[#16587B] flex items-center justify-center font-display font-extrabold text-[#F5EEDD] text-xl shadow-md shadow-[#16587B]/20">
           N
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <span class="font-extrabold text-lg tracking-tight text-[#3A3131]">NEURAL<span class="text-[#EC5B38]">SEARCH</span></span>
-            <span class="mono text-[10px] px-2.5 py-0.5 rounded-full bg-[#FFFFFF] border border-[#E5DBCA] text-[#2E7D32] bg-emerald-50/80 font-bold flex items-center gap-1">
+            <span class="font-display font-extrabold text-xl tracking-tight text-[#0D384F]">
+              NEURAL<span class="text-[#16587B] ml-1">SEARCH</span>
+            </span>
+            <span class="mono text-[10px] px-2.5 py-0.5 rounded-full bg-[#FFFFFF] border border-[#84B3CE]/40 text-[#16587B] bg-[#84B3CE]/10 font-bold flex items-center gap-1">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
               Private & Ad-Free
             </span>
           </div>
-          <p class="text-xs text-[#8C8575]">All Web • Images • Videos • News • Shopping • Photo Search</p>
+          <p class="text-xs text-[#527488]">All Web • Images • Videos • News • Shopping • Photo Search</p>
         </div>
       </div>
 
       <!-- Quick Actions & Privacy Shield Status -->
       <div class="flex items-center gap-2">
-        <div class="hidden sm:flex items-center gap-1.5 mono text-[11px] px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#E5DBCA] text-[#7A7465] shadow-xs">
+        <div class="hidden sm:flex items-center gap-1.5 mono text-[11px] px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#E2D9C5] text-[#527488] shadow-xs">
           <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-          <span>Shield: <strong>Active</strong></span>
+          <span>Shield: <strong class="text-[#0D384F]">Active</strong></span>
         </div>
-        <button onclick="openIndexModal()" class="px-3 py-1.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF5EE] border border-[#E5DBCA] text-xs font-semibold text-[#524646] flex items-center gap-1.5 transition-colors shadow-xs">
-          <svg class="w-3.5 h-3.5 text-[#EC5B38]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+        <button onclick="openIndexModal()" class="px-3 py-1.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF6ED] border border-[#E2D9C5] text-xs font-semibold text-[#0D384F] flex items-center gap-1.5 transition-colors shadow-xs">
+          <svg class="w-3.5 h-3.5 text-[#16587B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
           Local Indexer
         </button>
       </div>
     </header>
+
+    <!-- Offline Fallback Banner -->
+    <div id="offlineNotice" class="hidden flex items-center justify-between p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs shadow-xs">
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
+        <span class="font-bold">Offline Mode:</span>
+        <span class="hidden sm:inline">Internet connection lost. Local document search is enabled.</span>
+      </div>
+      <button onclick="setCategory('local')" class="px-3 py-1 rounded-xl bg-amber-200/80 hover:bg-amber-300 text-amber-900 font-bold transition-colors shadow-2xs">
+        Search Local Docs 📁
+      </button>
+    </div>
 
     <!-- Search Hero & Category Bar -->
     <div class="space-y-3">
       
       <!-- Search Input Bar with Google Lens Camera Icon -->
       <div class="relative">
-        <div class="flex items-center gap-3 px-4 py-3.5 sm:py-4 rounded-2xl bg-[#FFFFFF] border-2 border-[#E0D5BE] focus-within:border-[#EC5B38] focus-within:ring-4 focus-within:ring-[#EC5B38]/10 transition-all shadow-md shadow-[#524646]/5">
+        <div class="search-input-shell flex items-center gap-3 px-4 py-3.5 sm:py-4 rounded-2xl border-2 shadow-sm shadow-[#16587B]/5">
           
           <!-- Search Icon -->
-          <svg class="w-5 h-5 text-[#A8A492] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5 text-[#84B3CE] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
           </svg>
           
           <!-- Search Input -->
           <input id="searchInput" type="text" placeholder="Search the web freely without tracking, ads, or cookies..." 
-                 class="w-full bg-transparent text-[#3A3131] text-base placeholder-[#A8A492] outline-none font-medium"
+                 class="w-full bg-transparent text-[#0D384F] text-base placeholder-[#7C9BAF] outline-none font-medium"
                  autocomplete="off" autofocus>
           
           <!-- Clear Button -->
-          <button id="btnClear" onclick="clearSearch()" class="hidden text-[#A8A492] hover:text-[#3A3131] p-1">
+          <button id="btnClear" onclick="clearSearch()" class="hidden text-[#7C9BAF] hover:text-[#0D384F] p-1">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
           </button>
 
-          <!-- Photo Search (Google Lens Equivalent) Button -->
-          <button onclick="openPhotoModal()" title="Search by Image (Photo Search)" class="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#FAF5EE] hover:bg-[#F3EBDD] border border-[#E0D5BE] text-xs font-semibold text-[#524646] transition-colors shrink-0">
-            <svg class="w-4 h-4 text-[#EC5B38]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <!-- Photo Search (Visual Search) Button -->
+          <button onclick="openPhotoModal()" title="Search by Image (Photo Search)" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FAF6ED] hover:bg-[#F3EBDD] border border-[#E2D9C5] text-xs font-semibold text-[#0D384F] transition-colors shrink-0">
+            <svg class="w-4 h-4 text-[#16587B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
             </svg>
-            <span class="hidden sm:inline text-[11px]">Photo Search</span>
+            <span class="hidden sm:inline text-[11px] font-bold">Photo Search</span>
           </button>
 
           <div class="flex items-center gap-1.5 shrink-0">
-            <span id="latencyPill" class="hidden mono text-xs text-[#EC5B38] font-bold bg-[#EC5B38]/10 px-2 py-0.5 rounded-lg border border-[#EC5B38]/20">0ms</span>
-            <kbd class="hidden sm:inline-block mono text-[11px] text-[#7A7465] bg-[#FAF5EE] px-2 py-1 rounded-md border border-[#E0D5BE]">/</kbd>
+            <span id="latencyPill" class="hidden mono text-xs text-[#16587B] font-bold bg-[#84B3CE]/15 px-2 py-0.5 rounded-lg border border-[#84B3CE]/30">0ms</span>
+            <kbd class="hidden sm:inline-block mono text-[11px] text-[#527488] bg-[#FAF6ED] px-2 py-1 rounded-md border border-[#E2D9C5]">/</kbd>
           </div>
         </div>
 
         <!-- Autocomplete Suggestions Dropdown -->
-        <div id="autocompleteBox" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-[#FFFFFF] border border-[#E5DBCA] rounded-2xl shadow-xl z-40 overflow-hidden divide-y divide-[#F5EFE6]">
+        <div id="autocompleteBox" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-[#FFFFFF] border border-[#E2D9C5] rounded-2xl shadow-xl z-40 overflow-hidden divide-y divide-[#F5EFE6]">
           <ul id="autocompleteList" class="py-1"></ul>
         </div>
       </div>
 
-      <!-- Google-Style Category Navigation Tabs -->
+      <!-- Category Navigation Tabs -->
       <div class="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
-        <div class="flex items-center gap-1 bg-[#FFFFFF] p-1 rounded-xl border border-[#E5DBCA] shadow-xs overflow-x-auto">
-          <button onclick="setCategory('all')" id="tabAll" class="px-3.5 py-1.5 rounded-lg font-bold bg-[#EC5B38] text-white transition-colors flex items-center gap-1.5 whitespace-nowrap">
+        <div class="flex items-center gap-1 bg-[#FFFFFF] p-1 rounded-xl border border-[#E2D9C5] shadow-xs overflow-x-auto">
+          <button onclick="setCategory('all')" id="tabAll" class="px-3.5 py-1.5 rounded-lg font-bold bg-[#16587B] text-white transition-colors flex items-center gap-1.5 whitespace-nowrap shadow-xs">
             <span>🌐</span> All
           </button>
-          <button onclick="setCategory('images')" id="tabImages" class="px-3.5 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors flex items-center gap-1.5 whitespace-nowrap">
+          <button onclick="setCategory('images')" id="tabImages" class="px-3.5 py-1.5 rounded-lg font-medium text-[#527488] hover:text-[#0D384F] transition-colors flex items-center gap-1.5 whitespace-nowrap">
             <span>🖼️</span> Images
           </button>
-          <button onclick="setCategory('videos')" id="tabVideos" class="px-3.5 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors flex items-center gap-1.5 whitespace-nowrap">
+          <button onclick="setCategory('videos')" id="tabVideos" class="px-3.5 py-1.5 rounded-lg font-medium text-[#527488] hover:text-[#0D384F] transition-colors flex items-center gap-1.5 whitespace-nowrap">
             <span>🎬</span> Videos
           </button>
-          <button onclick="setCategory('news')" id="tabNews" class="px-3.5 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors flex items-center gap-1.5 whitespace-nowrap">
+          <button onclick="setCategory('news')" id="tabNews" class="px-3.5 py-1.5 rounded-lg font-medium text-[#527488] hover:text-[#0D384F] transition-colors flex items-center gap-1.5 whitespace-nowrap">
             <span>📰</span> News
           </button>
-          <button onclick="setCategory('shopping')" id="tabShopping" class="px-3.5 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors flex items-center gap-1.5 whitespace-nowrap">
+          <button onclick="setCategory('shopping')" id="tabShopping" class="px-3.5 py-1.5 rounded-lg font-medium text-[#527488] hover:text-[#0D384F] transition-colors flex items-center gap-1.5 whitespace-nowrap">
             <span>🛍️</span> Shopping
           </button>
-          <button onclick="setCategory('local')" id="tabLocal" class="px-3.5 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors flex items-center gap-1.5 whitespace-nowrap">
+          <button onclick="setCategory('local')" id="tabLocal" class="px-3.5 py-1.5 rounded-lg font-medium text-[#527488] hover:text-[#0D384F] transition-colors flex items-center gap-1.5 whitespace-nowrap">
             <span>📁</span> Local Docs
           </button>
         </div>
 
-        <!-- Filter Controls -->
+        <!-- Neural Reranker Switch -->
         <div id="rerankControl" class="flex items-center gap-2">
-          <label class="flex items-center gap-1.5 cursor-pointer text-xs text-[#7A7465]">
-            <input type="checkbox" id="rerankToggle" checked onchange="triggerSearch()" class="rounded border-[#E5DBCA] text-[#EC5B38] focus:ring-[#EC5B38]">
+          <label class="flex items-center gap-1.5 cursor-pointer text-xs text-[#527488] select-none">
+            <input type="checkbox" id="rerankToggle" checked onchange="triggerSearch()" class="rounded border-[#E2D9C5] text-[#16587B] focus:ring-[#84B3CE]">
             <span class="font-medium">On-Device Neural Reranker</span>
           </label>
         </div>
       </div>
 
+      <!-- Search Horizon & SafeSearch Filter Bar -->
+      <div id="filterBar" class="flex flex-wrap items-center justify-between gap-2.5 pt-0.5 text-xs">
+        <!-- Time Range Horizon Filters -->
+        <div class="flex items-center gap-1 bg-[#FFFFFF] p-1 rounded-xl border border-[#E2D9C5] shadow-xs overflow-x-auto">
+          <span class="text-[#527488] font-semibold text-[11px] px-2 flex items-center gap-1 shrink-0">
+            <svg class="w-3.5 h-3.5 text-[#84B3CE]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span class="hidden sm:inline">Time:</span>
+          </span>
+          <button onclick="setTimeFilter('')" id="timeFilterAll" class="time-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-[#16587B] text-white transition-colors whitespace-nowrap">
+            Any Time
+          </button>
+          <button onclick="setTimeFilter('day')" id="timeFilterDay" class="time-filter-btn px-2.5 py-1 rounded-lg text-xs font-medium text-[#527488] hover:text-[#0D384F] hover:bg-[#FAF6ED] transition-colors whitespace-nowrap">
+            Past 24h
+          </button>
+          <button onclick="setTimeFilter('week')" id="timeFilterWeek" class="time-filter-btn px-2.5 py-1 rounded-lg text-xs font-medium text-[#527488] hover:text-[#0D384F] hover:bg-[#FAF6ED] transition-colors whitespace-nowrap">
+            Past Week
+          </button>
+          <button onclick="setTimeFilter('month')" id="timeFilterMonth" class="time-filter-btn px-2.5 py-1 rounded-lg text-xs font-medium text-[#527488] hover:text-[#0D384F] hover:bg-[#FAF6ED] transition-colors whitespace-nowrap">
+            Past Month
+          </button>
+          <button onclick="setTimeFilter('year')" id="timeFilterYear" class="time-filter-btn px-2.5 py-1 rounded-lg text-xs font-medium text-[#527488] hover:text-[#0D384F] hover:bg-[#FAF6ED] transition-colors whitespace-nowrap">
+            Past Year
+          </button>
+        </div>
+
+        <!-- SafeSearch Segmented Control -->
+        <div class="flex items-center gap-1 bg-[#FFFFFF] p-1 rounded-xl border border-[#E2D9C5] shadow-xs">
+          <span class="text-[#527488] font-semibold text-[11px] px-2 flex items-center gap-1 shrink-0">
+            <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+            <span class="hidden sm:inline">SafeSearch:</span>
+          </span>
+          <button onclick="setSafeSearch('moderate')" id="safeSearchModerate" class="safesearch-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-[#16587B] text-white transition-colors">
+            Moderate
+          </button>
+          <button onclick="setSafeSearch('strict')" id="safeSearchStrict" class="safesearch-btn px-2.5 py-1 rounded-lg text-xs font-medium text-[#527488] hover:text-[#0D384F] hover:bg-[#FAF6ED] transition-colors">
+            Strict
+          </button>
+          <button onclick="setSafeSearch('off')" id="safeSearchOff" class="safesearch-btn px-2.5 py-1 rounded-lg text-xs font-medium text-[#527488] hover:text-[#0D384F] hover:bg-[#FAF6ED] transition-colors">
+            Off
+          </button>
+        </div>
+      </div>
+
       <!-- Privacy & Telemetry Bar -->
-      <div id="telemetryBar" class="hidden flex flex-wrap items-center justify-between px-4 py-2 rounded-xl bg-[#FFFFFF] border border-[#E5DBCA] mono text-xs shadow-xs gap-2">
+      <div id="telemetryBar" class="hidden flex flex-wrap items-center justify-between px-4 py-2 rounded-xl bg-[#FFFFFF] border border-[#E2D9C5] mono text-xs shadow-xs gap-2">
         <div class="flex flex-wrap items-center gap-3">
-          <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold text-[10px] flex items-center gap-1 border border-emerald-200">
-            <svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd"></path></svg>
+          <span class="text-[#16587B] bg-[#84B3CE]/15 px-2.5 py-0.5 rounded font-bold text-[10px] flex items-center gap-1 border border-[#84B3CE]/30">
+            <svg class="w-3 h-3 text-[#16587B]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd"></path></svg>
             PRIVACY SHIELD
           </span>
-          <span class="text-[#524646]">Category: <strong id="tCategory" class="text-[#3A3131] uppercase">ALL</strong></span>
+          <span class="text-[#527488]">Category: <strong id="tCategory" class="text-[#0D384F] uppercase">ALL</strong></span>
           <span class="text-[#D8CCA9]">•</span>
-          <span class="text-[#524646]">Results: <strong id="tTotalHits" class="text-[#3A3131]">0</strong></span>
+          <span class="text-[#527488]">Results: <strong id="tTotalHits" class="text-[#0D384F]">0</strong></span>
           <span class="text-[#D8CCA9]">•</span>
-          <span class="text-[#524646]">Trackers Stripped: <strong id="tTrackersPurged" class="text-[#EC5B38]">0</strong></span>
+          <span class="text-[#527488]">Trackers Purged: <strong id="tTrackersPurged" class="text-[#16587B]">0</strong></span>
           <span class="text-[#D8CCA9]">•</span>
-          <span class="text-[#524646]">Latency: <strong id="tLatency" class="text-[#3A3131]">0ms</strong></span>
+          <span class="text-[#527488]">Latency: <strong id="tLatency" class="text-[#0D384F]">0ms</strong></span>
         </div>
-        <span id="tTotalBadge" class="text-[#EC5B38] font-bold text-xs bg-[#EC5B38]/10 px-2 py-0.5 rounded">0ms</span>
+        <span id="tTotalBadge" class="text-[#16587B] font-bold text-xs bg-[#84B3CE]/15 px-2.5 py-0.5 rounded border border-[#84B3CE]/30">0ms</span>
       </div>
     </div>
 
@@ -182,29 +294,35 @@
     <div id="resultsList" class="space-y-4">
       
       <!-- Empty state placeholder -->
-      <div id="emptyState" class="text-center py-16 px-4 rounded-3xl bg-[#FAF5EE]/70 border-2 border-dashed border-[#E5DBCA] space-y-4">
-        <div class="w-14 h-14 rounded-2xl bg-[#EC5B38]/10 text-[#EC5B38] flex items-center justify-center mx-auto shadow-xs">
+      <div id="emptyState" class="text-center py-16 px-4 rounded-3xl bg-[#FFFFFF]/70 border-2 border-dashed border-[#E2D9C5] space-y-4">
+        <div class="w-14 h-14 rounded-2xl bg-[#84B3CE]/15 text-[#16587B] flex items-center justify-center mx-auto shadow-xs border border-[#84B3CE]/30">
           <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
         </div>
         <div class="space-y-1">
-          <h3 class="text-lg font-bold text-[#3A3131]">Search Everything with Complete Privacy</h3>
-          <p class="text-xs text-[#7A7465] max-w-md mx-auto leading-relaxed">
+          <h3 class="font-display text-2xl font-bold text-[#0D384F]">Search Everything with Complete Privacy</h3>
+          <p class="text-xs text-[#527488] max-w-md mx-auto leading-relaxed">
             Search live Web, Images, Videos, News, Shopping, and Photos with zero tracking cookies and on-device neural reranking.
           </p>
         </div>
         
         <!-- Features Quick Pills -->
         <div class="flex flex-wrap justify-center gap-2 pt-2">
-          <button onclick="quickSearch('fastapi framework tutorial')" class="mono text-[11px] px-3 py-1.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF5EE] border border-[#E5DBCA] text-[#524646] transition-colors">
+          <button onclick="quickSearch('fastapi framework tutorial')" class="mono text-[11px] px-3.5 py-1.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF6ED] border border-[#E2D9C5] text-[#0D384F] transition-colors shadow-2xs">
             ⚡ fastapi tutorial
           </button>
-          <button onclick="quickSearch('quantum computing definition')" class="mono text-[11px] px-3 py-1.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF5EE] border border-[#E5DBCA] text-[#524646] transition-colors">
+          <button onclick="quickSearch('quantum computing definition')" class="mono text-[11px] px-3.5 py-1.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF6ED] border border-[#E2D9C5] text-[#0D384F] transition-colors shadow-2xs">
             ⚛️ quantum computing
           </button>
-          <button onclick="quickSearch('supercar ferrari', 'images')" class="mono text-[11px] px-3 py-1.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF5EE] border border-[#E5DBCA] text-[#524646] transition-colors">
+          <button onclick="quickSearch('45 * 12 + sqrt(144)')" class="mono text-[11px] px-3.5 py-1.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF6ED] border border-[#E2D9C5] text-[#16587B] font-bold transition-colors shadow-2xs">
+            🧮 45 * 12 + sqrt(144)
+          </button>
+          <button onclick="quickSearch('100 km to miles')" class="mono text-[11px] px-3.5 py-1.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF6ED] border border-[#E2D9C5] text-[#16587B] font-bold transition-colors shadow-2xs">
+            ⚖️ 100 km to miles
+          </button>
+          <button onclick="quickSearch('supercar ferrari', 'images')" class="mono text-[11px] px-3.5 py-1.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF6ED] border border-[#E2D9C5] text-[#0D384F] transition-colors shadow-2xs">
             🖼️ supercar images
           </button>
-          <button onclick="quickSearch('mechanical keyboard', 'shopping')" class="mono text-[11px] px-3 py-1.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF5EE] border border-[#E5DBCA] text-[#524646] transition-colors">
+          <button onclick="quickSearch('mechanical keyboard', 'shopping')" class="mono text-[11px] px-3.5 py-1.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF6ED] border border-[#E2D9C5] text-[#0D384F] transition-colors shadow-2xs">
             🛍️ mechanical keyboards
           </button>
         </div>
@@ -213,82 +331,82 @@
 
   </div>
 
-  <!-- Photo Search Modal (Google Lens Equivalent) -->
-  <div id="photoModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-    <div class="max-w-xl w-full bg-[#FFFFFF] rounded-3xl p-6 border border-[#E5DBCA] shadow-2xl space-y-5">
-      <div class="flex items-center justify-between border-b border-[#E5DBCA] pb-3">
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-xl bg-[#EC5B38]/10 text-[#EC5B38] flex items-center justify-center font-bold">
+  <!-- Photo Search Modal -->
+  <div id="photoModal" class="hidden fixed inset-0 bg-[#0D384F]/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+    <div class="max-w-xl w-full bg-[#FFFFFF] rounded-3xl p-6 border border-[#E2D9C5] shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b border-[#E2D9C5] pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-[#84B3CE]/20 text-[#16587B] flex items-center justify-center font-bold">
             📷
           </div>
           <div>
-            <h3 class="font-bold text-base text-[#3A3131]">Photo Search</h3>
-            <p class="text-[11px] text-[#8C8575]">Search by image with on-device visual analysis & reverse search</p>
+            <h3 class="font-display font-bold text-lg text-[#0D384F]">Photo Search</h3>
+            <p class="text-[11px] text-[#527488]">Search by image with on-device visual analysis & reverse search</p>
           </div>
         </div>
-        <button onclick="closePhotoModal()" class="text-[#7A7465] hover:text-[#3A3131] text-lg font-bold">✕</button>
+        <button onclick="closePhotoModal()" class="text-[#527488] hover:text-[#0D384F] text-lg font-bold">✕</button>
       </div>
 
       <!-- Mode Tabs (Upload vs URL) -->
-      <div class="flex items-center gap-2 bg-[#FAF5EE] p-1 rounded-xl border border-[#E5DBCA] text-xs">
-        <button id="btnPhotoUploadTab" onclick="setPhotoTab('upload')" class="flex-1 py-1.5 rounded-lg font-bold bg-[#EC5B38] text-white transition-colors">
+      <div class="flex items-center gap-2 bg-[#FAF6ED] p-1 rounded-xl border border-[#E2D9C5] text-xs">
+        <button id="btnPhotoUploadTab" onclick="setPhotoTab('upload')" class="flex-1 py-1.5 rounded-lg font-bold bg-[#16587B] text-white transition-colors">
           📁 Upload Image File
         </button>
-        <button id="btnPhotoUrlTab" onclick="setPhotoTab('url')" class="flex-1 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors">
+        <button id="btnPhotoUrlTab" onclick="setPhotoTab('url')" class="flex-1 py-1.5 rounded-lg font-medium text-[#527488] hover:text-[#0D384F] transition-colors">
           🔗 Paste Image URL
         </button>
       </div>
 
       <!-- Tab 1: Upload File -->
       <div id="photoUploadSection" class="space-y-3">
-        <div id="dropzone" onclick="document.getElementById('photoFileInput').click()" class="border-2 border-dashed border-[#E0D5BE] hover:border-[#EC5B38] rounded-2xl p-8 text-center cursor-pointer bg-[#FAF5EE]/50 hover:bg-[#FAF5EE] transition-all space-y-2">
-          <svg class="w-10 h-10 text-[#EC5B38] mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-          <div class="font-bold text-sm text-[#3A3131]">Drag & drop an image here, or browse</div>
-          <p class="text-xs text-[#8C8575]">Supports JPG, PNG, WEBP files</p>
+        <div id="dropzone" onclick="document.getElementById('photoFileInput').click()" class="border-2 border-dashed border-[#DCD0B6] hover:border-[#16587B] rounded-2xl p-8 text-center cursor-pointer bg-[#FAF6ED]/50 hover:bg-[#FAF6ED] transition-all space-y-2">
+          <svg class="w-10 h-10 text-[#16587B] mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          <div class="font-bold text-sm text-[#0D384F]">Drag & drop an image here, or browse</div>
+          <p class="text-xs text-[#527488]">Supports JPG, PNG, WEBP files</p>
           <input type="file" id="photoFileInput" accept="image/*" class="hidden" onchange="handlePhotoFileUpload(this.files)">
         </div>
       </div>
 
       <!-- Tab 2: Paste Image URL -->
       <div id="photoUrlSection" class="hidden space-y-3">
-        <label class="mono text-[11px] text-[#7A7465] font-semibold">Image Web URL</label>
+        <label class="mono text-[11px] text-[#527488] font-semibold">Image Web URL</label>
         <div class="flex gap-2">
           <input id="photoUrlInput" type="url" placeholder="https://example.com/photo.jpg" 
-                 class="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF5EE] border border-[#E5DBCA] text-xs text-[#3A3131] outline-none focus:border-[#EC5B38]">
-          <button onclick="handlePhotoUrlSearch()" class="px-4 py-2.5 rounded-xl bg-[#EC5B38] hover:bg-[#D74B2A] text-white font-bold text-xs shrink-0 transition-colors">
+                 class="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF6ED] border border-[#E2D9C5] text-xs text-[#0D384F] outline-none focus:border-[#16587B]">
+          <button onclick="handlePhotoUrlSearch()" class="px-4 py-2.5 rounded-xl bg-[#16587B] hover:bg-[#114966] text-white font-bold text-xs shrink-0 transition-colors">
             Search
           </button>
         </div>
       </div>
 
       <!-- Photo Search Loading Indicator -->
-      <div id="photoProgress" class="hidden text-xs mono text-[#EC5B38] bg-[#EC5B38]/10 p-3 rounded-xl flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-[#EC5B38] animate-ping"></span>
+      <div id="photoProgress" class="hidden text-xs mono text-[#16587B] bg-[#84B3CE]/15 p-3 rounded-xl flex items-center gap-2 border border-[#84B3CE]/30">
+        <span class="w-2 h-2 rounded-full bg-[#16587B] animate-ping"></span>
         Analyzing visual features and searching matching images...
       </div>
 
-      <!-- Visual Results Container Inside Modal or Main View -->
-      <div id="photoResultsPreview" class="hidden space-y-3 border-t border-[#E5DBCA] pt-3 max-h-72 overflow-y-auto"></div>
+      <!-- Visual Results Container Inside Modal -->
+      <div id="photoResultsPreview" class="hidden space-y-3 border-t border-[#E2D9C5] pt-3 max-h-72 overflow-y-auto"></div>
     </div>
   </div>
 
   <!-- Image Lightbox Modal -->
   <div id="lightboxModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50" onclick="closeLightbox()">
-    <div class="max-w-4xl max-h-[90vh] bg-[#FFFFFF] rounded-3xl overflow-hidden shadow-2xl flex flex-col" onclick="event.stopPropagation()">
-      <div class="p-4 border-b border-[#E5DBCA] flex items-center justify-between">
-        <h4 id="lightboxTitle" class="text-sm font-bold text-[#3A3131] truncate max-w-md">Image Preview</h4>
-        <button onclick="closeLightbox()" class="text-[#7A7465] hover:text-[#3A3131] text-lg font-bold">✕</button>
+    <div class="max-w-4xl max-h-[90vh] bg-[#FFFFFF] rounded-3xl overflow-hidden shadow-2xl flex flex-col border border-[#E2D9C5]" onclick="event.stopPropagation()">
+      <div class="p-4 border-b border-[#E2D9C5] flex items-center justify-between">
+        <h4 id="lightboxTitle" class="text-sm font-bold text-[#0D384F] truncate max-w-md">Image Preview</h4>
+        <button onclick="closeLightbox()" class="text-[#527488] hover:text-[#0D384F] text-lg font-bold">✕</button>
       </div>
-      <div class="bg-black/90 p-2 flex items-center justify-center max-h-[70vh] overflow-hidden">
+      <div class="bg-black/95 p-2 flex items-center justify-center max-h-[70vh] overflow-hidden">
         <img id="lightboxImg" src="" alt="Full resolution" class="max-h-[68vh] max-w-full object-contain">
       </div>
-      <div class="p-4 bg-[#FAF5EE] border-t border-[#E5DBCA] flex items-center justify-between">
-        <span id="lightboxDomain" class="mono text-xs text-[#8C8575]">source.com</span>
+      <div class="p-4 bg-[#FAF6ED] border-t border-[#E2D9C5] flex items-center justify-between">
+        <span id="lightboxDomain" class="mono text-xs text-[#527488]">source.com</span>
         <div class="flex items-center gap-2">
-          <a id="lightboxSourceBtn" href="#" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#E5DBCA] text-xs font-semibold text-[#524646] hover:bg-[#F3EBDD]">
+          <a id="lightboxSourceBtn" href="#" target="_blank" rel="noopener noreferrer" class="px-3.5 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#E2D9C5] text-xs font-semibold text-[#0D384F] hover:bg-[#F3EBDD]">
             Visit Page
           </a>
-          <a id="lightboxDirectBtn" href="#" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-[#EC5B38] text-white text-xs font-bold hover:bg-[#D74B2A]">
+          <a id="lightboxDirectBtn" href="#" target="_blank" rel="noopener noreferrer" class="px-3.5 py-1.5 rounded-xl bg-[#16587B] text-white text-xs font-bold hover:bg-[#114966]">
             Open Full Image ↗
           </a>
         </div>
@@ -297,86 +415,131 @@
   </div>
 
   <!-- Explainability Slide-Over Drawer -->
-  <div id="drawer" class="fixed inset-y-0 right-0 max-w-md w-full bg-[#FFFFFF] border-l border-[#E5DBCA] shadow-2xl p-6 z-50 transform translate-x-full transition-transform duration-300 ease-out flex flex-col justify-between overflow-y-auto">
+  <div id="drawer" class="fixed inset-y-0 right-0 max-w-md w-full bg-[#FFFFFF] border-l border-[#E2D9C5] shadow-2xl p-6 z-50 transform translate-x-full transition-transform duration-300 ease-out flex flex-col justify-between overflow-y-auto">
     <div class="space-y-5">
-      <div class="flex items-center justify-between border-b border-[#E5DBCA] pb-4">
+      <div class="flex items-center justify-between border-b border-[#E2D9C5] pb-4">
         <div>
-          <span class="mono text-[10px] uppercase tracking-wider text-[#EC5B38] font-bold">Provenance & Inspection</span>
-          <h2 class="text-base font-bold text-[#3A3131]">Audit & Privacy Transparency</h2>
+          <span class="mono text-[10px] uppercase tracking-wider text-[#16587B] font-bold">Provenance & Inspection</span>
+          <h2 class="font-display text-lg font-bold text-[#0D384F]">Audit & Transparency</h2>
         </div>
-        <button onclick="closeDrawer()" class="p-1 rounded-lg text-[#7A7465] hover:bg-[#FAF5EE]">
+        <button onclick="closeDrawer()" class="p-1 rounded-lg text-[#527488] hover:bg-[#FAF6ED]">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
 
       <div class="space-y-3">
-        <h4 class="mono text-xs uppercase font-bold text-[#7A7465]">Neural & Sanitization Audit</h4>
-        <div id="drawerScores" class="p-3.5 rounded-xl bg-[#FAF5EE] border border-[#E5DBCA] space-y-2 mono text-xs"></div>
+        <h4 class="mono text-xs uppercase font-bold text-[#527488]">Neural & Sanitization Audit</h4>
+        <div id="drawerScores" class="p-3.5 rounded-xl bg-[#FAF6ED] border border-[#E2D9C5] space-y-2 mono text-xs"></div>
       </div>
 
       <div class="space-y-2">
-        <h4 class="mono text-xs uppercase font-bold text-[#7A7465]">Sanitized Destination URL</h4>
-        <div id="drawerUrl" class="p-3 rounded-xl bg-[#FAF5EE] border border-[#E5DBCA] text-xs text-[#3A3131] break-all mono"></div>
+        <h4 class="mono text-xs uppercase font-bold text-[#527488]">Sanitized Destination URL</h4>
+        <div id="drawerUrl" class="p-3 rounded-xl bg-[#FAF6ED] border border-[#E2D9C5] text-xs text-[#0D384F] break-all mono"></div>
       </div>
 
       <div class="space-y-2">
-        <h4 class="mono text-xs uppercase font-bold text-[#7A7465]">Snippet Content</h4>
-        <pre id="drawerContent" class="p-3.5 rounded-xl bg-[#FAF5EE] border border-[#E5DBCA] text-xs text-[#3A3131] whitespace-pre-wrap font-sans leading-relaxed max-h-64 overflow-y-auto"></pre>
+        <h4 class="mono text-xs uppercase font-bold text-[#527488]">Snippet Content</h4>
+        <pre id="drawerContent" class="p-3.5 rounded-xl bg-[#FAF6ED] border border-[#E2D9C5] text-xs text-[#0D384F] whitespace-pre-wrap font-sans leading-relaxed max-h-64 overflow-y-auto"></pre>
       </div>
     </div>
 
-    <div class="pt-4 border-t border-[#E5DBCA] flex justify-end">
-      <button onclick="closeDrawer()" class="px-4 py-2 rounded-xl bg-[#FAF5EE] border border-[#E5DBCA] text-xs font-semibold text-[#524646]">Close Inspector (ESC)</button>
+    <div class="pt-4 border-t border-[#E2D9C5] flex justify-end">
+      <button onclick="closeDrawer()" class="px-4 py-2 rounded-xl bg-[#FAF6ED] border border-[#E2D9C5] text-xs font-semibold text-[#0D384F]">Close Inspector (ESC)</button>
     </div>
   </div>
 
   <!-- Folder Indexing Modal -->
-  <div id="indexModal" class="hidden fixed inset-0 bg-black/30 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-    <div class="max-w-md w-full bg-[#FFFFFF] rounded-3xl p-6 border border-[#E5DBCA] shadow-2xl space-y-4">
-      <div class="flex items-center justify-between border-b border-[#E5DBCA] pb-3">
-        <h3 class="font-bold text-base text-[#3A3131]">Index Local Files</h3>
-        <button onclick="closeIndexModal()" class="text-[#7A7465] hover:text-[#3A3131]">✕</button>
+  <div id="indexModal" class="hidden fixed inset-0 bg-[#0D384F]/30 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+    <div class="max-w-md w-full bg-[#FFFFFF] rounded-3xl p-6 border border-[#E2D9C5] shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-[#E2D9C5] pb-3">
+        <h3 class="font-display font-bold text-lg text-[#0D384F]">Index Local Files</h3>
+        <button onclick="closeIndexModal()" class="text-[#527488] hover:text-[#0D384F]">✕</button>
       </div>
-      <p class="text-xs text-[#7A7465]">Index local markdown, code, or docs for offline search.</p>
+      <p class="text-xs text-[#527488]">Index local markdown, code, or docs for offline search.</p>
       
       <div class="space-y-1.5">
-        <label class="mono text-[11px] text-[#7A7465] font-semibold">Directory Path</label>
+        <label class="mono text-[11px] text-[#527488] font-semibold">Directory Path</label>
         <input id="dirPathInput" type="text" placeholder="e.g. ./src or docs" 
-               class="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF5EE] border border-[#E5DBCA] text-xs text-[#3A3131] outline-none focus:border-[#EC5B38]">
+               class="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF6ED] border border-[#E2D9C5] text-xs text-[#0D384F] outline-none focus:border-[#16587B]">
       </div>
 
       <div class="space-y-1">
-        <span class="mono text-[10px] text-[#8C8575] uppercase font-bold tracking-wider">Quick Presets:</span>
+        <span class="mono text-[10px] text-[#527488] uppercase font-bold tracking-wider">Quick Presets:</span>
         <div class="flex flex-wrap gap-1.5">
-          <button type="button" onclick="setDirPath('./src')" class="px-2 py-1 rounded-md bg-[#FAF5EE] hover:bg-[#F3EBDD] border border-[#E5DBCA] mono text-[10px] text-[#524646]">
+          <button type="button" onclick="setDirPath('./src')" class="px-2.5 py-1 rounded-md bg-[#FAF6ED] hover:bg-[#F3EBDD] border border-[#E2D9C5] mono text-[10px] text-[#0D384F]">
             📁 Project Source (./src)
           </button>
-          <button type="button" onclick="setDirPath('.')" class="px-2 py-1 rounded-md bg-[#FAF5EE] hover:bg-[#F3EBDD] border border-[#E5DBCA] mono text-[10px] text-[#524646]">
+          <button type="button" onclick="setDirPath('.')" class="px-2.5 py-1 rounded-md bg-[#FAF6ED] hover:bg-[#F3EBDD] border border-[#E2D9C5] mono text-[10px] text-[#0D384F]">
             📁 Project Root Docs (.)
           </button>
         </div>
       </div>
 
-      <div id="indexProgress" class="hidden text-xs mono text-[#EC5B38] bg-[#EC5B38]/10 p-2.5 rounded-xl">
+      <div id="indexProgress" class="hidden text-xs mono text-[#16587B] bg-[#84B3CE]/15 p-2.5 rounded-xl border border-[#84B3CE]/30">
         Indexing in progress, chunking & embedding...
       </div>
 
       <div class="flex items-center justify-end gap-2 pt-2">
-        <button onclick="closeIndexModal()" class="px-3.5 py-1.5 rounded-xl bg-[#FAF5EE] text-xs font-semibold text-[#7A7465]">Cancel</button>
-        <button onclick="startIndexing()" class="px-4 py-1.5 rounded-xl bg-[#EC5B38] text-xs font-bold text-white hover:bg-[#D74B2A] transition-colors">Start Indexing</button>
+        <button onclick="closeIndexModal()" class="px-3.5 py-1.5 rounded-xl bg-[#FAF6ED] text-xs font-semibold text-[#527488]">Cancel</button>
+        <button onclick="startIndexing()" class="px-4 py-1.5 rounded-xl bg-[#16587B] text-xs font-bold text-white hover:bg-[#114966] transition-colors">Start Indexing</button>
       </div>
     </div>
   </div>
 
   <!-- Footer -->
-  <footer class="border-t border-[#E5DBCA] py-4 text-center mono text-[11px] text-[#8C8575] space-y-1">
+  <footer class="border-t border-[#E2D9C5] py-4 text-center mono text-[11px] text-[#527488] space-y-1">
     <div>NeuralSearch • 100% Private Multi-Modal Web Search Engine</div>
-    <div class="text-[#A8A492]">Built with FastAPI • ONNX Neural Reranking • Privacy Proxy Architecture</div>
+    <div class="text-[#7C9BAF]">Built with FastAPI • ONNX Neural Reranking • Privacy Proxy Architecture</div>
   </footer>
 
   <script>
+    // -------------------------------------------------------------
+    // Wave 3: LRU Client-Side Session Cache & Abort Pipeline
+    // -------------------------------------------------------------
+    class LRUSearchCache {
+      constructor(maxSize = 60) {
+        this.maxSize = maxSize;
+        this.cache = new Map();
+      }
+
+      _makeKey(query, category, mode, rerank, timeRange, safeSearch) {
+        return `${query.toLowerCase()}::${category}::${mode}::${rerank}::${timeRange || ''}::${safeSearch || ''}`;
+      }
+
+      get(query, category, mode, rerank, timeRange, safeSearch) {
+        const key = this._makeKey(query, category, mode, rerank, timeRange, safeSearch);
+        if (!this.cache.has(key)) return null;
+        const val = this.cache.get(key);
+        // Refresh recency
+        this.cache.delete(key);
+        this.cache.set(key, val);
+        return val;
+      }
+
+      set(query, category, mode, rerank, timeRange, safeSearch, data) {
+        const key = this._makeKey(query, category, mode, rerank, timeRange, safeSearch);
+        if (this.cache.has(key)) {
+          this.cache.delete(key);
+        } else if (this.cache.size >= this.maxSize) {
+          const oldestKey = this.cache.keys().next().value;
+          this.cache.delete(oldestKey);
+        }
+        this.cache.set(key, data);
+      }
+
+      clear() {
+        this.cache.clear();
+      }
+    }
+
+    const searchCache = new LRUSearchCache(60);
+    let searchAbortController = null;
+    let autocompleteAbortController = null;
+
     let currentCategory = 'all';
     let currentMode = 'web';
+    let currentTimeFilter = '';
+    let currentSafeSearch = 'moderate';
     let debounceTimer = null;
     let autocompleteTimer = null;
     let currentResults = [];
@@ -398,7 +561,7 @@
 
       if (val.trim()) {
         autocompleteTimer = setTimeout(fetchAutocomplete, 100);
-        debounceTimer = setTimeout(triggerSearch, 300);
+        debounceTimer = setTimeout(triggerSearch, 250);
       } else {
         hideAutocomplete();
         resetToHome();
@@ -435,30 +598,87 @@
       }
     });
 
-    // Global Keyboard Shortcuts
+    // Global Keyboard Navigation (Vim & Arrow keys for power search)
     document.addEventListener('keydown', (e) => {
-      if (e.key === '/' && document.activeElement !== searchInput) {
-        e.preventDefault();
-        searchInput.focus();
-        searchInput.select();
-      } else if (e.key === 'Escape') {
+      // Escape closes overlays, drawers, lightboxes & autocomplete
+      if (e.key === 'Escape') {
         closeDrawer();
         closeIndexModal();
         closePhotoModal();
         closeLightbox();
         hideAutocomplete();
+        if (selectedIndex >= 0) {
+          selectResult(-1);
+        }
+        return;
+      }
+
+      // If typing inside an input/textarea, let native editing work
+      const activeEl = document.activeElement;
+      const isInputActive = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+
+      // '/' focuses search input from anywhere
+      if (e.key === '/' && !isInputActive) {
+        e.preventDefault();
+        searchInput.focus();
+        searchInput.select();
+        return;
+      }
+
+      // Result list navigation when not focused in an input
+      if (!isInputActive && currentResults.length > 0) {
+        if (e.key === 'ArrowDown' || e.key === 'j') {
+          e.preventDefault();
+          selectResult(Math.min(selectedIndex + 1, currentResults.length - 1));
+        } else if (e.key === 'ArrowUp' || e.key === 'k') {
+          e.preventDefault();
+          selectResult(Math.max(selectedIndex - 1, 0));
+        } else if (e.key === 'Enter' && selectedIndex >= 0 && currentResults[selectedIndex]) {
+          e.preventDefault();
+          const targetUrl = currentResults[selectedIndex].url || currentResults[selectedIndex].source_url;
+          if (targetUrl) {
+            window.open(targetUrl, '_blank', 'noopener,noreferrer');
+          }
+        } else if (e.key === 'i' && selectedIndex >= 0) {
+          e.preventDefault();
+          inspectResult(selectedIndex);
+        } else if (e.key === 'c' && selectedIndex >= 0 && currentResults[selectedIndex]) {
+          e.preventDefault();
+          const targetUrl = currentResults[selectedIndex].url || currentResults[selectedIndex].source_url;
+          if (targetUrl) {
+            navigator.clipboard.writeText(targetUrl);
+            const card = document.getElementById(`hit-${selectedIndex}`);
+            if (card) {
+              const origBorder = card.style.borderColor;
+              card.style.borderColor = '#16587B';
+              setTimeout(() => { card.style.borderColor = origBorder; }, 700);
+            }
+          }
+        }
       }
     });
 
     async function fetchAutocomplete() {
       const q = searchInput.value.trim();
       if (!q) return;
+
+      if (autocompleteAbortController) {
+        autocompleteAbortController.abort();
+      }
+      autocompleteAbortController = new AbortController();
+
       try {
-        const res = await fetch(`/api/autocomplete?q=${encodeURIComponent(q)}`);
+        const res = await fetch(`/api/autocomplete?q=${encodeURIComponent(q)}`, {
+          signal: autocompleteAbortController.signal
+        });
         const data = await res.json();
         currentSuggestions = data.suggestions || [];
         renderAutocomplete(currentSuggestions);
-      } catch (err) {}
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Autocomplete fetch error:', err);
+        }
+      }
     }
 
     function renderAutocomplete(suggestions) {
@@ -471,12 +691,12 @@
       suggestions.forEach((s, idx) => {
         html += `
           <li onclick="applySuggestion('${s.replace(/'/g, "\\'")}')" 
-              class="autocomplete-item px-4 py-2 text-xs text-[#3A3131] hover:bg-[#FAF5EE] cursor-pointer flex items-center justify-between transition-colors">
+              class="autocomplete-item px-4 py-2 text-xs text-[#0D384F] hover:bg-[#FAF6ED] cursor-pointer flex items-center justify-between transition-colors">
             <div class="flex items-center gap-2">
-              <svg class="w-3.5 h-3.5 text-[#A8A492]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              <svg class="w-3.5 h-3.5 text-[#84B3CE]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
               <span>${s}</span>
             </div>
-            <span class="mono text-[10px] text-[#A8A492]">↵</span>
+            <span class="mono text-[10px] text-[#84B3CE]">↵</span>
           </li>
         `;
       });
@@ -520,6 +740,7 @@
       document.getElementById('instantAnswerBox').classList.add('hidden');
       document.getElementById('resultsList').innerHTML = document.getElementById('emptyState').outerHTML;
       currentResults = [];
+      selectedIndex = -1;
     }
 
     function quickSearch(query, cat = 'all') {
@@ -551,9 +772,9 @@
 
       for (const [key, btn] of Object.entries(tabs)) {
         if (key === cat) {
-          btn.className = 'px-3.5 py-1.5 rounded-lg font-bold bg-[#EC5B38] text-white transition-colors flex items-center gap-1.5 whitespace-nowrap shadow-xs';
+          btn.className = 'px-3.5 py-1.5 rounded-lg font-bold bg-[#16587B] text-white transition-colors flex items-center gap-1.5 whitespace-nowrap shadow-xs';
         } else {
-          btn.className = 'px-3.5 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors flex items-center gap-1.5 whitespace-nowrap';
+          btn.className = 'px-3.5 py-1.5 rounded-lg font-medium text-[#527488] hover:text-[#0D384F] transition-colors flex items-center gap-1.5 whitespace-nowrap';
         }
       }
 
@@ -561,6 +782,115 @@
         triggerSearch();
       }
     }
+
+    function setTimeFilter(tf) {
+      currentTimeFilter = tf;
+      const timeBtns = {
+        '': document.getElementById('timeFilterAll'),
+        'day': document.getElementById('timeFilterDay'),
+        'week': document.getElementById('timeFilterWeek'),
+        'month': document.getElementById('timeFilterMonth'),
+        'year': document.getElementById('timeFilterYear'),
+      };
+
+      for (const [key, btn] of Object.entries(timeBtns)) {
+        if (btn) {
+          if (key === tf) {
+            btn.className = 'time-filter-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-[#16587B] text-white transition-colors whitespace-nowrap shadow-xs';
+          } else {
+            btn.className = 'time-filter-btn px-2.5 py-1 rounded-lg text-xs font-medium text-[#527488] hover:text-[#0D384F] hover:bg-[#FAF6ED] transition-colors whitespace-nowrap';
+          }
+        }
+      }
+
+      if (searchInput.value.trim()) {
+        triggerSearch();
+      }
+    }
+
+    function setSafeSearch(ss) {
+      currentSafeSearch = ss;
+      const safeBtns = {
+        'moderate': document.getElementById('safeSearchModerate'),
+        'strict': document.getElementById('safeSearchStrict'),
+        'off': document.getElementById('safeSearchOff'),
+      };
+
+      for (const [key, btn] of Object.entries(safeBtns)) {
+        if (btn) {
+          if (key === ss) {
+            btn.className = 'safesearch-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-[#16587B] text-white transition-colors shadow-xs';
+          } else {
+            btn.className = 'safesearch-btn px-2.5 py-1 rounded-lg text-xs font-medium text-[#527488] hover:text-[#0D384F] hover:bg-[#FAF6ED] transition-colors';
+          }
+        }
+      }
+
+      if (searchInput.value.trim()) {
+        triggerSearch();
+      }
+    }
+
+    function copyAnswerText(text, btn) {
+      navigator.clipboard.writeText(text);
+      const orig = btn.innerHTML;
+      btn.innerHTML = `<span class="text-emerald-700 font-bold">✓ Copied!</span>`;
+      setTimeout(() => { btn.innerHTML = orig; }, 1600);
+    }
+
+    function renderShimmerSkeletons() {
+      const container = document.getElementById('resultsList');
+      const skeletonsHtml = `
+        <div class="space-y-4">
+          ${[1, 2, 3, 4].map(() => `
+            <div class="p-5 rounded-2xl border border-[#E2D9C5] bg-[#FFFFFF] space-y-3 shadow-xs">
+              <div class="flex items-center gap-2">
+                <div class="w-4 h-4 rounded-full skeleton"></div>
+                <div class="w-32 h-3.5 skeleton"></div>
+              </div>
+              <div class="w-3/4 h-5 skeleton"></div>
+              <div class="space-y-1.5">
+                <div class="w-full h-3.5 skeleton"></div>
+                <div class="w-5/6 h-3.5 skeleton"></div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      container.innerHTML = skeletonsHtml;
+    }
+
+    function showOfflineError() {
+      const container = document.getElementById('resultsList');
+      container.innerHTML = `
+        <div class="text-center py-12 p-6 rounded-2xl bg-[#FFFFFF] border-2 border-dashed border-[#E2D9C5] space-y-3">
+          <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center mx-auto text-xl font-bold">
+            ⚡
+          </div>
+          <h3 class="font-display text-xl font-bold text-[#0D384F]">You are currently offline</h3>
+          <p class="text-xs text-[#527488] max-w-md mx-auto leading-relaxed">
+            Internet connection is unavailable. You can still search your indexed local documents instantly!
+          </p>
+          <div class="pt-2">
+            <button onclick="setCategory('local')" class="px-4 py-2 rounded-xl bg-[#16587B] text-white text-xs font-bold hover:bg-[#114966] transition-colors shadow-xs">
+              Search Local Files 📁
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function updateNetworkStatus() {
+      const notice = document.getElementById('offlineNotice');
+      if (!navigator.onLine) {
+        if (notice) notice.classList.remove('hidden');
+      } else {
+        if (notice) notice.classList.add('hidden');
+      }
+    }
+
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
 
     async function triggerSearch() {
       const q = searchInput.value.trim();
@@ -570,14 +900,49 @@
       }
 
       const rerank = document.getElementById('rerankToggle').checked;
-      const url = `/api/search?q=${encodeURIComponent(q)}&category=${currentCategory}&mode=${currentMode}&rerank=${rerank}`;
+
+      // 1. Check LRU Cache for instantaneous 0ms response!
+      const cached = searchCache.get(q, currentCategory, currentMode, rerank, currentTimeFilter, currentSafeSearch);
+      if (cached) {
+        const cachedData = JSON.parse(JSON.stringify(cached));
+        cachedData.telemetry = cachedData.telemetry || {};
+        cachedData.telemetry.total_ms = 0.5;
+        cachedData.telemetry.cached = true;
+        renderResults(cachedData);
+        return;
+      }
+
+      // 2. Abort prior in-flight search request to prevent race conditions
+      if (searchAbortController) {
+        searchAbortController.abort();
+      }
+      searchAbortController = new AbortController();
+
+      // 3. Render Shimmer Skeletons while waiting (prevents CLS)
+      renderShimmerSkeletons();
+
+      let url = `/api/search?q=${encodeURIComponent(q)}&category=${currentCategory}&mode=${currentMode}&rerank=${rerank}`;
+      if (currentTimeFilter) {
+        url += `&time_range=${encodeURIComponent(currentTimeFilter)}`;
+      }
+      if (currentSafeSearch) {
+        url += `&safesearch=${encodeURIComponent(currentSafeSearch)}`;
+      }
 
       try {
-        const res = await fetch(url);
+        const res = await fetch(url, { signal: searchAbortController.signal });
         const data = await res.json();
+        // Cache result in LRU session cache
+        searchCache.set(q, currentCategory, currentMode, rerank, currentTimeFilter, currentSafeSearch, data);
         renderResults(data);
       } catch (err) {
+        if (err.name === 'AbortError') {
+          return;
+        }
         console.error('Search failed:', err);
+        if (!navigator.onLine) {
+          showOfflineError();
+        }
       }
     }
 
@@ -588,39 +953,108 @@
       // Update Telemetry & Privacy Counters
       const tel = data.telemetry || {};
       const totalMs = tel.total_ms || tel.fetch_ms || 0;
+      const isCacheHit = Boolean(tel.cached);
+
       document.getElementById('tCategory').innerText = data.category || currentCategory;
       document.getElementById('tTotalHits').innerText = data.total_hits || currentResults.length;
       document.getElementById('tTrackersPurged').innerText = data.trackers_purged_count || currentResults.length;
-      document.getElementById('tLatency').innerText = `${totalMs}ms`;
-      document.getElementById('tTotalBadge').innerText = `${totalMs}ms`;
+      document.getElementById('tLatency').innerText = isCacheHit ? '0ms (Cache Hit)' : `${totalMs}ms`;
+      document.getElementById('tTotalBadge').innerText = isCacheHit ? '⚡ 0ms Cached' : `${totalMs}ms`;
       document.getElementById('telemetryBar').classList.remove('hidden');
 
       const pill = document.getElementById('latencyPill');
-      pill.innerText = `${totalMs}ms`;
+      pill.innerText = isCacheHit ? '⚡ 0ms Cached' : `${totalMs}ms`;
       pill.classList.remove('hidden');
 
-      // 1. Render Instant Answer Box (All Web only)
+      // 1. Render Instant Answer Box (Math, Unit Converter, or Knowledge Card)
       const iaBox = document.getElementById('instantAnswerBox');
       if (data.instant_answer && currentCategory === 'all') {
         const ia = data.instant_answer;
-        iaBox.innerHTML = `
-          <div class="p-5 rounded-2xl bg-[#FFFFFF] border-2 border-[#E5DBCA] shadow-xs space-y-2.5">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="w-6 h-6 rounded-lg bg-[#FAF5EE] border border-[#E0D5BE] flex items-center justify-center text-xs font-bold text-[#524646]">W</span>
-                <span class="mono text-[11px] uppercase font-bold text-[#EC5B38] tracking-wider">${ia.source || 'Knowledge Card'}</span>
+        if (ia.answer_type === 'math') {
+          iaBox.innerHTML = `
+            <div class="p-5 sm:p-6 rounded-2xl bg-[#FFFFFF] border-2 border-[#16587B]/40 shadow-sm shadow-[#16587B]/10 space-y-4">
+              <div class="flex items-center justify-between border-b border-[#E2D9C5] pb-3">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 rounded-xl bg-[#84B3CE]/20 border border-[#84B3CE]/40 flex items-center justify-center text-sm font-bold text-[#16587B]">🧮</div>
+                  <div>
+                    <span class="mono text-xs font-bold text-[#16587B] uppercase tracking-wider block">Instant Math Calculator</span>
+                    <span class="text-[11px] text-[#527488]">Safe AST evaluation • Client verified</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="copyAnswerText('${ia.extract}', this)" class="mono text-xs px-3 py-1.5 rounded-xl bg-[#FAF6ED] hover:bg-[#F3EBDD] border border-[#E2D9C5] text-[#16587B] font-bold flex items-center gap-1.5 transition-colors shadow-2xs">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    <span>Copy Result</span>
+                  </button>
+                </div>
               </div>
-              <span class="mono text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold">100% Ad-Free Verified</span>
+              <div class="space-y-1">
+                <div class="mono text-sm text-[#527488] font-medium">${ia.title} =</div>
+                <div class="font-display text-3xl sm:text-4xl font-extrabold text-[#16587B] tracking-tight">${ia.extract}</div>
+              </div>
+              <!-- Quick math pills -->
+              <div class="pt-2 border-t border-[#F5EFE6] flex flex-wrap items-center gap-1.5">
+                <span class="mono text-[10px] text-[#527488] uppercase font-bold mr-1">Quick formulas:</span>
+                <button onclick="quickSearch('15% of 250')" class="mono text-[11px] px-2.5 py-1 rounded-lg bg-[#FAF6ED] hover:bg-[#F3EBDD] border border-[#E2D9C5] text-[#0D384F] transition-colors">15% of 250</button>
+                <button onclick="quickSearch('sqrt(144) + 12')" class="mono text-[11px] px-2.5 py-1 rounded-lg bg-[#FAF6ED] hover:bg-[#F3EBDD] border border-[#E2D9C5] text-[#0D384F] transition-colors">sqrt(144) + 12</button>
+                <button onclick="quickSearch('2^16')" class="mono text-[11px] px-2.5 py-1 rounded-lg bg-[#FAF6ED] hover:bg-[#F3EBDD] border border-[#E2D9C5] text-[#0D384F] transition-colors">2^16</button>
+                <button onclick="quickSearch('sin(45) * 10')" class="mono text-[11px] px-2.5 py-1 rounded-lg bg-[#FAF6ED] hover:bg-[#F3EBDD] border border-[#E2D9C5] text-[#0D384F] transition-colors">sin(45) * 10</button>
+              </div>
             </div>
-            <h3 class="text-lg font-bold text-[#3A3131]">${ia.title}</h3>
-            <p class="text-sm text-[#524646] leading-relaxed">${ia.extract}</p>
-            <div class="pt-1">
-              <a href="${ia.url}" target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-[#EC5B38] hover:underline flex items-center gap-1">
-                Read full article on Wikipedia →
-              </a>
+          `;
+        } else if (ia.answer_type === 'unit') {
+          iaBox.innerHTML = `
+            <div class="p-5 sm:p-6 rounded-2xl bg-[#FFFFFF] border-2 border-[#16587B]/40 shadow-sm shadow-[#16587B]/10 space-y-4">
+              <div class="flex items-center justify-between border-b border-[#E2D9C5] pb-3">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 rounded-xl bg-[#84B3CE]/20 border border-[#84B3CE]/40 flex items-center justify-center text-sm font-bold text-[#16587B]">⚖️</div>
+                  <div>
+                    <span class="mono text-xs font-bold text-[#16587B] uppercase tracking-wider block">Unit Converter</span>
+                    <span class="text-[11px] text-[#527488]">Exact dimensional conversion ratio</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="copyAnswerText('${ia.extract}', this)" class="mono text-xs px-3 py-1.5 rounded-xl bg-[#FAF6ED] hover:bg-[#F3EBDD] border border-[#E2D9C5] text-[#16587B] font-bold flex items-center gap-1.5 transition-colors shadow-2xs">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    <span>Copy Value</span>
+                  </button>
+                </div>
+              </div>
+              <div class="space-y-1">
+                <div class="mono text-sm text-[#527488] font-medium">${ia.title}</div>
+                <div class="font-display text-3xl sm:text-4xl font-extrabold text-[#16587B] tracking-tight">${ia.extract}</div>
+              </div>
+              <!-- Quick unit pills -->
+              <div class="pt-2 border-t border-[#F5EFE6] flex flex-wrap items-center gap-1.5">
+                <span class="mono text-[10px] text-[#527488] uppercase font-bold mr-1">Popular conversions:</span>
+                <button onclick="quickSearch('100 c to f')" class="mono text-[11px] px-2.5 py-1 rounded-lg bg-[#FAF6ED] hover:bg-[#F3EBDD] border border-[#E2D9C5] text-[#0D384F] transition-colors">100 C to F</button>
+                <button onclick="quickSearch('10 km to miles')" class="mono text-[11px] px-2.5 py-1 rounded-lg bg-[#FAF6ED] hover:bg-[#F3EBDD] border border-[#E2D9C5] text-[#0D384F] transition-colors">10 km to miles</button>
+                <button onclick="quickSearch('1024 mb to gb')" class="mono text-[11px] px-2.5 py-1 rounded-lg bg-[#FAF6ED] hover:bg-[#F3EBDD] border border-[#E2D9C5] text-[#0D384F] transition-colors">1024 MB to GB</button>
+                <button onclick="quickSearch('5 kg to lbs')" class="mono text-[11px] px-2.5 py-1 rounded-lg bg-[#FAF6ED] hover:bg-[#F3EBDD] border border-[#E2D9C5] text-[#0D384F] transition-colors">5 kg to lbs</button>
+              </div>
             </div>
-          </div>
-        `;
+          `;
+        } else {
+          // Knowledge / Wikipedia Card
+          iaBox.innerHTML = `
+            <div class="p-5 rounded-2xl bg-[#FFFFFF] border-2 border-[#E2D9C5] shadow-xs space-y-2.5">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-6 h-6 rounded-lg bg-[#FAF6ED] border border-[#DCD0B6] flex items-center justify-center text-xs font-bold text-[#16587B]">W</span>
+                  <span class="mono text-[11px] uppercase font-bold text-[#16587B] tracking-wider">${ia.source || 'Knowledge Card'}</span>
+                </div>
+                <span class="mono text-[10px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold">100% Ad-Free Verified</span>
+              </div>
+              <h3 class="font-display text-xl font-bold text-[#0D384F]">${ia.title}</h3>
+              <p class="text-sm text-[#527488] leading-relaxed">${ia.extract}</p>
+              <div class="pt-1">
+                <a href="${ia.url}" target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-[#16587B] hover:underline flex items-center gap-1">
+                  Read full article on Wikipedia →
+                </a>
+              </div>
+            </div>
+          `;
+        }
         iaBox.classList.remove('hidden');
       } else {
         iaBox.classList.add('hidden');
@@ -629,9 +1063,9 @@
       const container = document.getElementById('resultsList');
       if (currentResults.length === 0) {
         container.innerHTML = `
-          <div class="text-center py-12 p-6 rounded-2xl bg-[#FFFFFF] border border-[#E5DBCA] space-y-2">
-            <p class="text-base font-bold text-[#3A3131]">No matching results found</p>
-            <p class="text-xs text-[#7A7465]">Try different keywords or check another category tab.</p>
+          <div class="text-center py-12 p-6 rounded-2xl bg-[#FFFFFF] border border-[#E2D9C5] space-y-2">
+            <p class="text-base font-bold text-[#0D384F]">No matching results found</p>
+            <p class="text-xs text-[#527488]">Try different keywords or check another category tab.</p>
           </div>
         `;
         return;
@@ -660,45 +1094,45 @@
         const prov = hit.provenance || {};
         let scoreBadge = '';
         if (prov.rerank_score !== undefined && prov.rerank_score !== null) {
-          scoreBadge = `<span class="mono text-[10px] text-[#EC5B38] bg-[#EC5B38]/10 px-2 py-0.5 rounded border border-[#EC5B38]/20 font-bold">Neural Match: ${(prov.rerank_score * 100).toFixed(0)}%</span>`;
+          scoreBadge = `<span class="mono text-[10px] text-[#16587B] bg-[#84B3CE]/15 px-2 py-0.5 rounded border border-[#84B3CE]/30 font-bold">Neural Match: ${(prov.rerank_score * 100).toFixed(0)}%</span>`;
         }
 
         const trackerBadge = (hit.trackers_purged && hit.trackers_purged > 0)
-          ? `<span class="mono text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded font-semibold">${hit.trackers_purged} Trackers Stripped</span>`
-          : `<span class="mono text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-semibold">Clean URL</span>`;
+          ? `<span class="mono text-[10px] text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded font-semibold">${hit.trackers_purged} Trackers Stripped</span>`
+          : `<span class="mono text-[10px] text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-semibold">Clean URL</span>`;
 
         const isExternal = hit.url && hit.url.startsWith('http');
         const displayDomain = hit.domain || 'web';
 
         html += `
-          <div id="hit-${idx}" onclick="selectResult(${idx})" class="result-card p-5 rounded-2xl bg-[#FFFFFF] border border-[#E5DBCA] space-y-2.5 cursor-pointer shadow-xs">
+          <div id="hit-${idx}" onclick="selectResult(${idx})" class="result-card p-5 rounded-2xl border space-y-2.5 cursor-pointer shadow-xs">
             <div class="flex items-center justify-between gap-2 text-xs">
               <div class="flex items-center gap-2 truncate">
-                <span class="w-4 h-4 rounded-full bg-[#FAF5EE] border border-[#E0D5BE] flex items-center justify-center text-[10px] shrink-0">🌐</span>
-                <span class="mono text-xs font-semibold text-[#8C8575] truncate">${hit.display_url || displayDomain}</span>
+                <span class="w-4 h-4 rounded-full bg-[#FAF6ED] border border-[#DCD0B6] flex items-center justify-center text-[10px] shrink-0">🌐</span>
+                <span class="mono text-xs font-semibold text-[#527488] truncate">${hit.display_url || displayDomain}</span>
               </div>
               <div class="flex items-center gap-1.5 shrink-0">
                 ${scoreBadge}
                 ${trackerBadge}
-                <button onclick="event.stopPropagation(); inspectResult(${idx})" class="mono text-[11px] px-2 py-0.5 rounded bg-[#FAF5EE] hover:bg-[#F3EBDD] border border-[#E5DBCA] text-[#7A7465] font-semibold transition-colors">
+                <button onclick="event.stopPropagation(); inspectResult(${idx})" class="mono text-[11px] px-2 py-0.5 rounded bg-[#FAF6ED] hover:bg-[#F3EBDD] border border-[#E2D9C5] text-[#527488] font-semibold transition-colors">
                   Inspect
                 </button>
               </div>
             </div>
 
-            <h3 class="text-base font-bold text-[#3A3131]">
+            <h3 class="text-base font-bold text-[#0D384F]">
               ${isExternal 
-                ? `<a href="${hit.url}" target="_blank" rel="noopener noreferrer" class="hover:text-[#EC5B38] hover:underline transition-colors">${hit.title}</a>`
+                ? `<a href="${hit.url}" target="_blank" rel="noopener noreferrer" class="text-[#16587B] hover:underline transition-colors">${hit.title}</a>`
                 : hit.title}
             </h3>
 
-            <p class="text-sm text-[#524646] leading-relaxed">${hit.snippet || hit.content || ''}</p>
+            <p class="text-sm text-[#0D384F]/90 leading-relaxed">${hit.snippet || hit.content || ''}</p>
 
-            <div class="flex items-center justify-between pt-1 border-t border-[#F5EFE6] mono text-[11px] text-[#8C8575]">
-              <a href="${hit.url}" target="_blank" rel="noopener noreferrer" class="truncate max-w-lg hover:text-[#EC5B38] hover:underline transition-colors">
+            <div class="flex items-center justify-between pt-1 border-t border-[#F5EFE6] mono text-[11px] text-[#527488]">
+              <a href="${hit.url}" target="_blank" rel="noopener noreferrer" class="truncate max-w-lg hover:text-[#16587B] hover:underline transition-colors">
                 ${hit.url}
               </a>
-              <button onclick="event.stopPropagation(); copyUrl('${hit.url}', this)" class="text-[#A8A492] hover:text-[#524646] text-[10px] shrink-0">
+              <button onclick="event.stopPropagation(); copyUrl('${hit.url}', this)" class="text-[#7C9BAF] hover:text-[#0D384F] text-[10px] shrink-0 font-semibold">
                 Copy Link
               </button>
             </div>
@@ -709,7 +1143,7 @@
     }
 
     // -------------------------------------------------------------
-    // RENDER: IMAGES GRID (Google Images)
+    // RENDER: IMAGES GRID
     // -------------------------------------------------------------
     function renderImages(hits, container) {
       let html = '<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">';
@@ -717,18 +1151,18 @@
         const dim = (img.width && img.height) ? `${img.width} × ${img.height}` : 'HD Image';
         html += `
           <div onclick="openLightbox('${img.image_url}', '${img.title.replace(/'/g, "\\'")}', '${img.domain}', '${img.source_url}')" 
-               class="image-tile bg-[#FFFFFF] rounded-2xl border border-[#E5DBCA] overflow-hidden cursor-pointer shadow-xs flex flex-col justify-between group">
-            <div class="relative bg-[#FAF5EE] aspect-square overflow-hidden">
-              <img src="${img.thumb_url || img.image_url}" alt="${img.title}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.src='https://placehold.co/400x300/F3EBDD/524646?text=Image'">
-              <span class="absolute bottom-2 right-2 mono text-[9px] bg-black/70 text-white px-1.5 py-0.5 rounded font-semibold backdrop-blur-xs">
+               class="image-tile rounded-2xl border overflow-hidden cursor-pointer shadow-xs flex flex-col justify-between group">
+            <div class="relative bg-[#FAF6ED] aspect-square overflow-hidden">
+              <img src="${img.thumb_url || img.image_url}" alt="${img.title}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.src='https://placehold.co/400x300/F5EEDD/16587B?text=Image'">
+              <span class="absolute bottom-2 right-2 mono text-[9px] bg-[#0D384F]/80 text-[#F5EEDD] px-1.5 py-0.5 rounded font-semibold backdrop-blur-xs">
                 ${dim}
               </span>
             </div>
             <div class="p-2.5 space-y-1">
-              <h4 class="text-xs font-bold text-[#3A3131] truncate group-hover:text-[#EC5B38] transition-colors" title="${img.title}">${img.title}</h4>
-              <div class="flex items-center justify-between text-[10px] mono text-[#8C8575]">
+              <h4 class="text-xs font-bold text-[#0D384F] truncate group-hover:text-[#16587B] transition-colors" title="${img.title}">${img.title}</h4>
+              <div class="flex items-center justify-between text-[10px] mono text-[#527488]">
                 <span class="truncate max-w-[120px]">${img.domain}</span>
-                <span class="text-[#EC5B38] font-bold">↗</span>
+                <span class="text-[#16587B] font-bold">↗</span>
               </div>
             </div>
           </div>
@@ -739,17 +1173,17 @@
     }
 
     // -------------------------------------------------------------
-    // RENDER: VIDEOS LIST (Google Videos)
+    // RENDER: VIDEOS LIST
     // -------------------------------------------------------------
     function renderVideos(hits, container) {
       let html = '<div class="space-y-3.5">';
       hits.forEach((v, idx) => {
         html += `
-          <div class="result-card p-4 rounded-2xl bg-[#FFFFFF] border border-[#E5DBCA] shadow-xs flex flex-col sm:flex-row gap-4 items-start">
+          <div class="result-card p-4 rounded-2xl border shadow-xs flex flex-col sm:flex-row gap-4 items-start">
             <a href="${v.url}" target="_blank" rel="noopener noreferrer" class="relative shrink-0 w-full sm:w-48 aspect-video rounded-xl bg-black overflow-hidden group">
-              <img src="${v.thumb_url}" alt="${v.title}" class="w-full h-full object-cover group-hover:opacity-90 transition-opacity" onerror="this.src='https://placehold.co/320x180/000/fff?text=Video'">
+              <img src="${v.thumb_url}" alt="${v.title}" class="w-full h-full object-cover group-hover:opacity-90 transition-opacity" onerror="this.src='https://placehold.co/320x180/0D384F/F5EEDD?text=Video'">
               <div class="absolute inset-0 flex items-center justify-center">
-                <div class="w-9 h-9 rounded-full bg-[#EC5B38]/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                <div class="w-9 h-9 rounded-full bg-[#16587B]/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                   ▶
                 </div>
               </div>
@@ -760,18 +1194,18 @@
 
             <div class="space-y-1.5 flex-1 min-w-0">
               <div class="flex items-center gap-2">
-                <span class="mono text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded">
+                <span class="mono text-[10px] font-bold text-[#16587B] bg-[#84B3CE]/20 border border-[#84B3CE]/40 px-2 py-0.5 rounded">
                   ${v.platform}
                 </span>
-                <span class="mono text-[11px] text-[#8C8575] truncate">${v.channel}</span>
+                <span class="mono text-[11px] text-[#527488] truncate">${v.channel}</span>
               </div>
-              <h3 class="text-base font-bold text-[#3A3131]">
-                <a href="${v.url}" target="_blank" rel="noopener noreferrer" class="hover:text-[#EC5B38] hover:underline transition-colors">
+              <h3 class="text-base font-bold text-[#0D384F]">
+                <a href="${v.url}" target="_blank" rel="noopener noreferrer" class="text-[#16587B] hover:underline transition-colors">
                   ${v.title}
                 </a>
               </h3>
               <div class="pt-2">
-                <a href="${v.url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-xs font-bold text-[#EC5B38] hover:underline">
+                <a href="${v.url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-xs font-bold text-[#16587B] hover:underline">
                   Watch on ${v.platform} ↗
                 </a>
               </div>
@@ -784,32 +1218,32 @@
     }
 
     // -------------------------------------------------------------
-    // RENDER: NEWS ARTICLES (Google News)
+    // RENDER: NEWS ARTICLES
     // -------------------------------------------------------------
     function renderNews(hits, container) {
       let html = '<div class="space-y-3.5">';
       hits.forEach((n, idx) => {
         html += `
-          <div class="result-card p-5 rounded-2xl bg-[#FFFFFF] border border-[#E5DBCA] shadow-xs space-y-2">
+          <div class="result-card p-5 rounded-2xl border shadow-xs space-y-2">
             <div class="flex items-center justify-between text-xs">
               <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                <span class="mono font-bold text-[#EC5B38] uppercase text-[11px]">${n.source}</span>
+                <span class="w-2 h-2 rounded-full bg-[#16587B]"></span>
+                <span class="mono font-bold text-[#16587B] uppercase text-[11px]">${n.source}</span>
               </div>
-              <span class="mono text-[11px] text-[#8C8575]">${n.pub_date ? n.pub_date.slice(0, 16) : 'Breaking'}</span>
+              <span class="mono text-[11px] text-[#527488]">${n.pub_date ? n.pub_date.slice(0, 16) : 'Latest'}</span>
             </div>
 
-            <h3 class="text-base font-bold text-[#3A3131]">
-              <a href="${n.url}" target="_blank" rel="noopener noreferrer" class="hover:text-[#EC5B38] hover:underline transition-colors">
+            <h3 class="text-base font-bold text-[#0D384F]">
+              <a href="${n.url}" target="_blank" rel="noopener noreferrer" class="text-[#16587B] hover:underline transition-colors">
                 ${n.title}
               </a>
             </h3>
 
-            ${n.snippet ? `<p class="text-sm text-[#524646] leading-relaxed">${n.snippet}</p>` : ''}
+            ${n.snippet ? `<p class="text-sm text-[#0D384F]/90 leading-relaxed">${n.snippet}</p>` : ''}
 
-            <div class="pt-1 flex items-center justify-between mono text-[11px] text-[#8C8575]">
+            <div class="pt-1 flex items-center justify-between mono text-[11px] text-[#527488]">
               <span class="truncate max-w-md">${n.source_url || n.source}</span>
-              <a href="${n.url}" target="_blank" rel="noopener noreferrer" class="text-[#EC5B38] font-bold hover:underline">
+              <a href="${n.url}" target="_blank" rel="noopener noreferrer" class="text-[#16587B] font-bold hover:underline">
                 Read Article ↗
               </a>
             </div>
@@ -821,39 +1255,39 @@
     }
 
     // -------------------------------------------------------------
-    // RENDER: SHOPPING PRODUCTS (Google Shopping)
+    // RENDER: SHOPPING PRODUCTS
     // -------------------------------------------------------------
     function renderShopping(hits, container) {
       let html = '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">';
       hits.forEach((p, idx) => {
         const ratingStr = p.rating ? `★ ${p.rating.toFixed(1)}` : 'Verified';
         html += `
-          <div class="result-card p-4 rounded-2xl bg-[#FFFFFF] border border-[#E5DBCA] shadow-xs flex flex-col justify-between space-y-3">
+          <div class="result-card p-4 rounded-2xl border shadow-xs flex flex-col justify-between space-y-3">
             <div class="space-y-2.5">
               ${p.thumb_url ? `
-                <div class="w-full aspect-video rounded-xl bg-[#FAF5EE] overflow-hidden flex items-center justify-center">
+                <div class="w-full aspect-video rounded-xl bg-[#FAF6ED] overflow-hidden flex items-center justify-center border border-[#E2D9C5]">
                   <img src="${p.thumb_url}" alt="${p.title}" class="max-h-full max-w-full object-contain">
                 </div>
               ` : ''}
               <div class="flex items-center justify-between">
-                <span class="mono text-[10px] font-bold text-[#524646] bg-[#FAF5EE] border border-[#E0D5BE] px-2 py-0.5 rounded">
+                <span class="mono text-[10px] font-bold text-[#0D384F] bg-[#FAF6ED] border border-[#E2D9C5] px-2 py-0.5 rounded">
                   ${p.store}
                 </span>
-                <span class="mono text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded font-bold border border-amber-200">
+                <span class="mono text-[10px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded font-bold border border-amber-200">
                   ${ratingStr}
                 </span>
               </div>
-              <h3 class="text-sm font-bold text-[#3A3131] line-clamp-2">
-                <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="hover:text-[#EC5B38] hover:underline transition-colors">
+              <h3 class="text-sm font-bold text-[#0D384F] line-clamp-2">
+                <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="text-[#16587B] hover:underline transition-colors">
                   ${p.title}
                 </a>
               </h3>
-              ${p.snippet ? `<p class="text-xs text-[#7A7465] line-clamp-2 leading-relaxed">${p.snippet}</p>` : ''}
+              ${p.snippet ? `<p class="text-xs text-[#527488] line-clamp-2 leading-relaxed">${p.snippet}</p>` : ''}
             </div>
 
             <div class="pt-2 border-t border-[#F5EFE6] flex items-center justify-between">
-              <span class="text-base font-extrabold text-emerald-700 mono">${p.price}</span>
-              <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-[#EC5B38] hover:bg-[#D74B2A] text-white text-xs font-bold transition-colors">
+              <span class="text-base font-extrabold text-[#16587B] mono">${p.price}</span>
+              <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="px-3.5 py-1.5 rounded-xl bg-[#16587B] hover:bg-[#114966] text-white text-xs font-bold transition-colors">
                 View Store ↗
               </a>
             </div>
@@ -882,19 +1316,74 @@
       document.getElementById('photoUploadSection').classList.toggle('hidden', !isUpload);
       document.getElementById('photoUrlSection').classList.toggle('hidden', isUpload);
       document.getElementById('btnPhotoUploadTab').className = isUpload
-        ? 'flex-1 py-1.5 rounded-lg font-bold bg-[#EC5B38] text-white transition-colors'
-        : 'flex-1 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors';
+        ? 'flex-1 py-1.5 rounded-lg font-bold bg-[#16587B] text-white transition-colors'
+        : 'flex-1 py-1.5 rounded-lg font-medium text-[#527488] hover:text-[#0D384F] transition-colors';
       document.getElementById('btnPhotoUrlTab').className = !isUpload
-        ? 'flex-1 py-1.5 rounded-lg font-bold bg-[#EC5B38] text-white transition-colors'
-        : 'flex-1 py-1.5 rounded-lg font-medium text-[#7A7465] hover:text-[#3A3131] transition-colors';
+        ? 'flex-1 py-1.5 rounded-lg font-bold bg-[#16587B] text-white transition-colors'
+        : 'flex-1 py-1.5 rounded-lg font-medium text-[#527488] hover:text-[#0D384F] transition-colors';
+    }
+
+    // Wave 3: Canvas-based client-side image compression to prevent Vercel 4.5MB payload limit errors
+    async function compressImageIfNeeded(file, maxDimension = 1280, quality = 0.85) {
+      if (file.size <= 600 * 1024) {
+        return file;
+      }
+
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          let width = img.naturalWidth;
+          let height = img.naturalHeight;
+
+          if (width > maxDimension || height > maxDimension) {
+            if (width > height) {
+              height = Math.round((height * maxDimension) / width);
+              width = maxDimension;
+            } else {
+              width = Math.round((width * maxDimension) / height);
+              height = maxDimension;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
+                  type: 'image/jpeg',
+                  lastModified: Date.now(),
+                });
+                resolve(compressedFile);
+              } else {
+                resolve(file);
+              }
+            },
+            'image/jpeg',
+            quality
+          );
+        };
+        img.onerror = () => resolve(file);
+        img.src = URL.createObjectURL(file);
+      });
     }
 
     async function handlePhotoFileUpload(files) {
       if (!files || files.length === 0) return;
-      const file = files[0];
-      const formData = new FormData();
-      formData.append('file', file);
+      const originalFile = files[0];
+      const prog = document.getElementById('photoProgress');
+      prog.innerText = 'Optimizing and compressing image...';
+      prog.classList.remove('hidden');
 
+      const fileToUpload = await compressImageIfNeeded(originalFile);
+      const formData = new FormData();
+      formData.append('file', fileToUpload);
+
+      prog.innerHTML = `<span class="w-2 h-2 rounded-full bg-[#16587B] animate-ping"></span> Analyzing visual features and searching matching images...`;
       executePhotoSearch(formData);
     }
 
@@ -935,36 +1424,36 @@
 
       let html = `
         <div class="space-y-4">
-          <div class="flex items-start gap-4 p-3.5 rounded-2xl bg-[#FAF5EE] border border-[#E5DBCA]">
-            <img src="${data.source_image}" alt="Uploaded Photo" class="w-20 h-20 object-cover rounded-xl border border-[#E0D5BE] shrink-0">
+          <div class="flex items-start gap-4 p-3.5 rounded-2xl bg-[#FAF6ED] border border-[#E2D9C5]">
+            <img src="${data.source_image}" alt="Uploaded Photo" class="w-20 h-20 object-cover rounded-xl border border-[#DCD0B6] shrink-0">
             <div class="space-y-1 text-xs">
-              <span class="mono text-[10px] text-[#EC5B38] font-bold uppercase tracking-wider">Visual Inspection</span>
-              <div class="font-bold text-[#3A3131]">Format: ${det.format || 'JPEG'} • ${det.width || '800'} × ${det.height || '600'} (${det.aspect_ratio || '4:3'})</div>
-              <p class="text-[#7A7465] text-[11px] mono">Perceptual Hash: ${det.perceptual_hash || '7f8a9b1c2d3e4f5a'}</p>
+              <span class="mono text-[10px] text-[#16587B] font-bold uppercase tracking-wider">Visual Inspection</span>
+              <div class="font-bold text-[#0D384F]">Format: ${det.format || 'JPEG'} • ${det.width || '800'} × ${det.height || '600'} (${det.aspect_ratio || '4:3'})</div>
+              <p class="text-[#527488] text-[11px] mono">Perceptual Hash: ${det.perceptual_hash || '7f8a9b1c2d3e4f5a'}</p>
             </div>
           </div>
 
           <div class="space-y-2">
-            <h4 class="mono text-xs font-bold text-[#7A7465] uppercase">Safe Reverse Image Lookup</h4>
+            <h4 class="mono text-xs font-bold text-[#527488] uppercase">Safe Reverse Image Lookup</h4>
             <div class="flex flex-wrap gap-2">
-              <a href="${rev.google_lens}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#E5DBCA] text-xs font-semibold text-[#524646] hover:bg-[#FAF5EE]">
+              <a href="${rev.google_lens}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#E2D9C5] text-xs font-semibold text-[#0D384F] hover:bg-[#FAF6ED]">
                 Open in Google Lens ↗
               </a>
-              <a href="${rev.bing_visual}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#E5DBCA] text-xs font-semibold text-[#524646] hover:bg-[#FAF5EE]">
+              <a href="${rev.bing_visual}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#E2D9C5] text-xs font-semibold text-[#0D384F] hover:bg-[#FAF6ED]">
                 Open in Bing Visual ↗
               </a>
-              <a href="${rev.tineye}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#E5DBCA] text-xs font-semibold text-[#524646] hover:bg-[#FAF5EE]">
+              <a href="${rev.tineye}" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#E2D9C5] text-xs font-semibold text-[#0D384F] hover:bg-[#FAF6ED]">
                 Open in TinEye ↗
               </a>
             </div>
           </div>
 
           <div class="space-y-2">
-            <h4 class="mono text-xs font-bold text-[#7A7465] uppercase">Visually Similar Images (${matches.length})</h4>
+            <h4 class="mono text-xs font-bold text-[#527488] uppercase">Visually Similar Images (${matches.length})</h4>
             <div class="grid grid-cols-3 gap-2">
               ${matches.map(m => `
-                <a href="${m.source_url}" target="_blank" rel="noopener noreferrer" class="group relative rounded-xl overflow-hidden aspect-square bg-[#FAF5EE] border border-[#E5DBCA] block">
-                  <img src="${m.image_url}" alt="${m.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src='https://placehold.co/200x200?text=Match'">
+                <a href="${m.source_url}" target="_blank" rel="noopener noreferrer" class="group relative rounded-xl overflow-hidden aspect-square bg-[#FAF6ED] border border-[#E2D9C5] block">
+                  <img src="${m.image_url}" alt="${m.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" onerror="this.src='https://placehold.co/200x200/F5EEDD/16587B?text=Match'">
                 </a>
               `).join('')}
             </div>
@@ -1014,11 +1503,11 @@
 
       const prov = hit.provenance || {};
       let scoresHtml = '';
-      scoresHtml += `<div class="flex justify-between"><span class="text-[#7A7465]">Domain:</span> <strong class="text-[#3A3131]">${hit.domain || 'N/A'}</strong></div>`;
-      scoresHtml += `<div class="flex justify-between"><span class="text-[#7A7465]">Trackers Purged:</span> <strong class="text-[#EC5B38]">${hit.trackers_purged || 0}</strong></div>`;
-      scoresHtml += `<div class="flex justify-between"><span class="text-[#7A7465]">Organic Result:</span> <strong class="text-emerald-700">Yes (Ad-Free)</strong></div>`;
+      scoresHtml += `<div class="flex justify-between"><span class="text-[#527488]">Domain:</span> <strong class="text-[#0D384F]">${hit.domain || 'N/A'}</strong></div>`;
+      scoresHtml += `<div class="flex justify-between"><span class="text-[#527488]">Trackers Purged:</span> <strong class="text-[#16587B]">${hit.trackers_purged || 0}</strong></div>`;
+      scoresHtml += `<div class="flex justify-between"><span class="text-[#527488]">Organic Result:</span> <strong class="text-emerald-800 font-semibold">Yes (Ad-Free)</strong></div>`;
       if (prov.rerank_score !== undefined && prov.rerank_score !== null) {
-        scoresHtml += `<div class="flex justify-between"><span class="text-[#7A7465]">Cross-Encoder Score:</span> <strong class="text-[#EC5B38]">${(prov.rerank_score * 100).toFixed(2)}%</strong></div>`;
+        scoresHtml += `<div class="flex justify-between"><span class="text-[#527488]">Cross-Encoder Score:</span> <strong class="text-[#16587B]">${(prov.rerank_score * 100).toFixed(2)}%</strong></div>`;
       }
 
       document.getElementById('drawerScores').innerHTML = scoresHtml;

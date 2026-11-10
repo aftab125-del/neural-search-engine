@@ -274,17 +274,24 @@ class HybridEngine:
         category: str = "all",
         top_k: int = 15,
         rerank: bool = True,
+        time_range: Optional[str] = None,
+        safesearch: str = "moderate",
     ) -> WebSearchResponse:
         """
         Executes live internet search with tracker purge, ad filtering,
-        instant Wikipedia knowledge card, and on-device neural reranking.
+        instant Wikipedia/calculator knowledge card, and on-device neural reranking.
         """
         start_total = time.perf_counter()
         telemetry = SearchTelemetry()
 
         # 1. Fetch live web results and instant answers concurrently
         t0 = time.perf_counter()
-        web_task = self.web_fetcher.fetch_web_results(query, category=category)
+        web_task = self.web_fetcher.fetch_web_results(
+            query,
+            category=category,
+            time_range=time_range,
+            safesearch=safesearch,
+        )
         answer_task = self.web_fetcher.fetch_instant_answer(query)
 
         (raw_results, ads_blocked, trackers_purged), instant_answer = await asyncio.gather(

@@ -50,3 +50,29 @@ def test_stats_api(client):
     data = res.json()
     assert "total_documents" in data
     assert "total_chunks" in data
+
+
+def test_search_api_with_filters_and_calculator(client):
+    # Test calculator query
+    res = client.get("/api/search?q=25+*+4&mode=web")
+    assert res.status_code == 200
+    data = res.json()
+    assert data.get("instant_answer") is not None
+    assert data["instant_answer"]["answer_type"] == "math"
+    assert "100" in data["instant_answer"]["extract"]
+
+    # Test unit conversion query
+    res = client.get("/api/search?q=100+c+to+f&mode=web")
+    assert res.status_code == 200
+    data = res.json()
+    assert data.get("instant_answer") is not None
+    assert data["instant_answer"]["answer_type"] == "unit"
+    assert "212" in data["instant_answer"]["extract"]
+
+    # Test time_range and safesearch params
+    res = client.get("/api/search?q=python+news&time_range=week&safesearch=strict")
+    assert res.status_code == 200
+    data = res.json()
+    assert "hits" in data
+
+

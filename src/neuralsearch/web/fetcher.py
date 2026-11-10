@@ -20,6 +20,7 @@ import httpx
 
 from .ad_blocker import AdBlocker
 from .parser import DDGParser
+from ..core.calculator import get_instant_tool, InstantCalculation
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -92,11 +93,12 @@ class ShoppingResult:
 
 @dataclass(slots=True)
 class InstantAnswer:
-    """Instant knowledge summary (e.g. from Wikipedia)."""
+    """Instant knowledge summary (e.g. from Wikipedia, calculator, or live site)."""
     title: str
     extract: str
     url: str
     source: str = "Wikipedia"
+    answer_type: str = "knowledge"
 
 
 @dataclass(slots=True)
@@ -192,9 +194,12 @@ class WebSearchFetcher:
         self,
         query: str,
         category: str = "all",
+        time_range: Optional[str] = None,
+        safesearch: str = "moderate",
     ) -> Tuple[List[WebSearchResult], int, int]:
         """
         Executes live internet search on behalf of the user.
+        Supports time horizon filters and SafeSearch levels.
         Returns: (results, ads_blocked_count, trackers_stripped_count)
         """
         refined_query = query.strip()
@@ -211,11 +216,27 @@ class WebSearchFetcher:
         if direct_probe:
             results.append(direct_probe)
 
+        search_params: Dict[str, str] = {"q": refined_query}
+        if time_range:
+            tf_map = {
+                "day": "age-1d", "d": "age-1d",
+                "week": "age-1w", "w": "age-1w",
+                "month": "age-1m", "m": "age-1m",
+                "year": "age-1y", "y": "age-1y",
+            }
+            if time_range.lower() in tf_map:
+                search_params["qft"] = f"+filterui:{tf_map[time_range.lower()]}"
+
+        if safesearch == "strict":
+            search_params["adlt"] = "strict"
+        elif safesearch == "off":
+            search_params["adlt"] = "off"
+
         async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=True) as client:
             try:
                 resp = await client.get(
                     "https://www.bing.com/search",
-                    params={"q": refined_query},
+                    params=search_params,
                     headers=headers,
                 )
                 if resp.status_code == 200:
@@ -771,11 +792,22 @@ class WebSearchFetcher:
     # -------------------------------------------------------------------------
     async def fetch_instant_answer(self, query: str) -> Optional[InstantAnswer]:
         """
-        Retrieves direct knowledge cards (e.g. Wikipedia summary or direct live site card) for queries.
+        Retrieves direct knowledge cards (calculator, unit conversion, Wikipedia summary, or direct live site card).
         """
         clean_q = query.strip()
 
-        # Check if query is a direct URL or domain (e.g. uta-verse.vercel.app)
+        # 1. Instant Calculation & Unit Conversion Tool
+        calc = get_instant_tool(clean_q)
+        if calc:
+            return InstantAnswer(
+                title=calc.result,
+                extract=calc.formatted_display,
+                url="#calculator",
+                source=f"Instant {calc.calculation_type.capitalize()}",
+                answer_type=calc.calculation_type,
+            )
+
+        # 2. Check if query is a direct URL or domain (e.g. uta-verse.vercel.app)
         direct_probe = await self.probe_direct_url(clean_q)
         if direct_probe:
             return InstantAnswer(
@@ -783,6 +815,7 @@ class WebSearchFetcher:
                 extract=direct_probe.snippet,
                 url=direct_probe.url,
                 source="Direct Live Website",
+                answer_type="website",
             )
 
         words = clean_q.split()
